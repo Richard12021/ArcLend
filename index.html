@@ -41,9 +41,9 @@
       <div class="panel">
         <div class="label">Selected Market</div>
         <select id="assetSelect" onchange="onAssetChange()">
-          <option value="USDC">USDC — Native Arc USDC</option>
-          <option value="EURC">EURC — ERC20</option>
-          <option value="cirBTC">cirBTC — ERC20</option>
+          <option value="USDC">USDC</option>
+          <option value="EURC">EURC</option>
+          <option value="cirBTC">cirBTC</option>
         </select>
         <div class="small">Selected asset address:</div><div class="addr" id="assetAddr"></div>
       </div>
@@ -52,7 +52,7 @@
           <div><div class="label">Contract</div><div class="addr" id="contractAddr"></div></div>
           <span class="pill" id="networkStatus">Not connected</span>
         </div>
-        <div class="small" style="margin-top:12px">USDC is native on Arc. EURC and cirBTC use ERC20 approval before supply/repay.</div>
+        <div class="small" style="margin-top:12px">All markets use ERC20 approve → supply/repay. Native USDC is used only as gas.</div>
       </div>
     </section>
 
@@ -71,16 +71,16 @@
       <div class="panel">
         <h2>Actions</h2>
         <div class="box" style="margin-bottom:14px">
-          <h3>ERC20 Approval</h3>
+          <h3>Token Approval</h3>
           <input id="approveAmount" placeholder="Approve amount, e.g. 10" />
           <button onclick="approveSelectedAsset()">Approve Selected Asset</button>
-          <div class="small" id="approvalHint">USDC is native, approval is not needed.</div>
+          <div class="small" id="approvalHint">Approve selected token before supply or repay.</div>
         </div>
         <div class="actions">
-          <div class="box"><h3>Supply</h3><input id="supplyAmount" placeholder="Amount, e.g. 1" /><button onclick="supply()">Supply</button><div class="small" id="supplyHint"></div></div>
+          <div class="box"><h3>Supply</h3><input id="supplyAmount" placeholder="Amount, e.g. 1" /><button onclick="supply()">Supply</button><div class="small" id="supplyHint">Requires approval first.</div></div>
           <div class="box"><h3>Withdraw</h3><input id="withdrawAmount" placeholder="Amount, e.g. 0.5" /><button onclick="withdraw()">Withdraw</button></div>
           <div class="box"><h3>Borrow</h3><input id="borrowAmount" placeholder="Amount, e.g. 0.5" /><button onclick="borrow()">Borrow</button></div>
-          <div class="box"><h3>Repay</h3><input id="repayAmount" placeholder="Amount, e.g. 0.25" /><button onclick="repay()">Repay</button><div class="small" id="repayHint"></div></div>
+          <div class="box"><h3>Repay</h3><input id="repayAmount" placeholder="Amount, e.g. 0.25" /><button onclick="repay()">Repay</button><div class="small" id="repayHint">Requires approval first.</div></div>
         </div>
         <div class="row" style="margin-top:14px"><button class="ghost" onclick="refreshData()">Refresh Data</button><button class="ghost" onclick="fillDemo()">Fill Demo Values</button></div>
       </div>
@@ -89,18 +89,21 @@
   </div>
 
 <script>
-const POOL_ADDRESS = "0xC110d14fCfD853b7B33E0e6b4648C73317D7AE6f";
+const POOL_ADDRESS = "0x782CF213eeecdE6931Ef0f3fc6380C2304093939";
+
 const ASSETS = {
-  USDC:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,native:true},
-  EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6,native:false},
-  cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8,native:false}
+  USDC:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6},
+  EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6},
+  cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8}
 };
+
 const ARC_CHAIN_ID_DEC=5042002, ARC_CHAIN_ID_HEX="0x4CF1DA";
+
 const POOL_ABI=[
- "function supply(address asset,uint256 amount) payable",
+ "function supply(address asset,uint256 amount)",
  "function withdraw(address asset,uint256 amount)",
  "function borrow(address asset,uint256 amount)",
- "function repay(address asset,uint256 amount,address onBehalfOf) payable",
+ "function repay(address asset,uint256 amount,address onBehalfOf)",
  "function getUserSupplied(address user,address asset) view returns (uint256)",
  "function getUserBorrowed(address user,address asset) view returns (uint256)",
  "function getHealthFactor(address user) view returns (uint256)",
@@ -110,11 +113,13 @@ const POOL_ABI=[
  "function getUtilization(address asset) view returns (uint256)",
  "function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)"
 ];
+
 const ERC20_ABI=[
  "function approve(address spender,uint256 amount) returns (bool)",
  "function allowance(address owner,address spender) view returns (uint256)",
  "function balanceOf(address account) view returns (uint256)"
 ];
+
 let provider, signer, account, pool, selectedSymbol="USDC";
 
 document.getElementById("contractAddr").textContent=POOL_ADDRESS;
@@ -130,17 +135,17 @@ function formatPercent(value,digits=2){const n=Number(ethers.formatUnits(value,1
 function updateAssetUI(){
  const asset=currentAsset();
  document.getElementById("assetAddr").textContent=asset.address;
- if(asset.native){
-  document.getElementById("approvalHint").textContent="USDC is native on Arc, approval is not needed.";
-  document.getElementById("supplyHint").textContent="For native USDC, transaction value is sent automatically.";
-  document.getElementById("repayHint").textContent="For native USDC repay, transaction value is sent automatically.";
- } else {
-  document.getElementById("approvalHint").textContent=`${asset.symbol} is ERC20. Approve ArcLend before supply or repay.`;
-  document.getElementById("supplyHint").textContent=`${asset.symbol} uses ERC20 approve + transferFrom.`;
-  document.getElementById("repayHint").textContent=`${asset.symbol} repay requires approve first.`;
- }
+ document.getElementById("approvalHint").textContent=`Approve ${asset.symbol} before supply or repay.`;
+ document.getElementById("supplyHint").textContent=`Supply uses ERC20 transferFrom. Approve ${asset.symbol} first.`;
+ document.getElementById("repayHint").textContent=`Repay uses ERC20 transferFrom. Approve ${asset.symbol} first.`;
 }
-async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();log("Selected asset: "+selectedSymbol);await refreshData()}
+
+async function onAssetChange(){
+ selectedSymbol=document.getElementById("assetSelect").value;
+ updateAssetUI();
+ log("Selected asset: "+selectedSymbol);
+ await refreshData();
+}
 
 async function connectWallet(){
  if(!window.ethereum){alert("Please install MetaMask or OKX Wallet.");return}
@@ -158,20 +163,37 @@ async function connectWallet(){
  log("Wallet connected: "+account);
  await refreshData();
 }
+
 async function ensureArcNetwork(){
  const network=await provider.getNetwork();
  if(Number(network.chainId)===ARC_CHAIN_ID_DEC)return;
- try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX}]})}
- catch(e){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:6},rpcUrls:["https://rpc.testnet.arc.network"],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}
+ try{
+  await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX}]});
+ }catch(e){
+  await window.ethereum.request({method:"wallet_addEthereumChain",params:[{
+   chainId:ARC_CHAIN_ID_HEX,
+   chainName:"Arc Testnet",
+   nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},
+   rpcUrls:["https://rpc.testnet.arc.network"],
+   blockExplorerUrls:["https://testnet.arcscan.app"]
+  }]});
+ }
 }
+
 async function refreshData(){
  if(!pool||!account)return;
  const asset=currentAsset();
  const [supplied,borrowed,state,healthFactor,maxBorrow,supplyRate,borrowRate,utilization]=await Promise.all([
-  pool.getUserSupplied(account,asset.address), pool.getUserBorrowed(account,asset.address), pool.poolStates(asset.address),
-  pool.getHealthFactor(account), pool.getMaxBorrow(account,asset.address), pool.getSupplyRate(asset.address),
-  pool.getBorrowRate(asset.address), pool.getUtilization(asset.address)
+  pool.getUserSupplied(account,asset.address),
+  pool.getUserBorrowed(account,asset.address),
+  pool.poolStates(asset.address),
+  pool.getHealthFactor(account),
+  pool.getMaxBorrow(account,asset.address),
+  pool.getSupplyRate(asset.address),
+  pool.getBorrowRate(asset.address),
+  pool.getUtilization(asset.address)
  ]);
+
  document.getElementById("supplied").textContent=formatAmountFor(asset,supplied);
  document.getElementById("borrowed").textContent=formatAmountFor(asset,borrowed);
  document.getElementById("poolSupplied").textContent=formatAmountFor(asset,state.totalSupplied);
@@ -180,63 +202,108 @@ async function refreshData(){
  document.getElementById("availableBorrow").textContent=formatAmountFor(asset,maxBorrow);
  document.getElementById("rates").innerHTML=`<span style="font-size:18px;">${formatPercent(supplyRate)} / ${formatPercent(borrowRate)}</span>`;
  document.getElementById("utilization").textContent=formatPercent(utilization);
+
  const utilNum=Math.min(Number(ethers.formatUnits(utilization,18))*100,100);
  document.getElementById("utilizationBar").style.width=(Number.isFinite(utilNum)?utilNum:0)+"%";
  log(`${asset.symbol} data refreshed.`);
 }
+
 async function approveSelectedAsset(){
  try{
   const asset=currentAsset();
-  if(asset.native){log("USDC is native on Arc. Approval is not required.");return}
   const amount=parseAssetAmount(document.getElementById("approveAmount").value);
   const token=new ethers.Contract(asset.address,ERC20_ABI,signer);
+
   log(`Approving ${formatAmountFor(asset,amount)} for ArcLend...`);
   const tx=await token.approve(POOL_ADDRESS,amount);
   log("Approve tx sent: "+tx.hash);
   await tx.wait();
   log("Approve confirmed.");
- }catch(e){log("Approve failed: "+(e.shortMessage||e.message))}
+ }catch(e){
+  log("Approve failed: "+(e.shortMessage||e.message));
+ }
 }
+
 async function supply(){
  try{
   const asset=currentAsset(), amount=parseAssetAmount(document.getElementById("supplyAmount").value);
   log(`Supplying ${formatAmountFor(asset,amount)}...`);
-  const tx=await pool.supply(asset.address,amount,asset.native?{value:amount}:{});
-  log("Supply tx sent: "+tx.hash); await tx.wait(); log("Supply confirmed."); await refreshData();
- }catch(e){log("Supply failed: "+(e.shortMessage||e.message))}
+  const tx=await pool.supply(asset.address,amount);
+  log("Supply tx sent: "+tx.hash);
+  await tx.wait();
+  log("Supply confirmed.");
+  await refreshData();
+ }catch(e){
+  log("Supply failed: "+(e.shortMessage||e.message));
+ }
 }
+
 async function withdraw(){
  try{
   const asset=currentAsset(), amount=parseAssetAmount(document.getElementById("withdrawAmount").value);
   log(`Withdrawing ${formatAmountFor(asset,amount)}...`);
   const tx=await pool.withdraw(asset.address,amount);
-  log("Withdraw tx sent: "+tx.hash); await tx.wait(); log("Withdraw confirmed."); await refreshData();
- }catch(e){log("Withdraw failed: "+(e.shortMessage||e.message))}
+  log("Withdraw tx sent: "+tx.hash);
+  await tx.wait();
+  log("Withdraw confirmed.");
+  await refreshData();
+ }catch(e){
+  log("Withdraw failed: "+(e.shortMessage||e.message));
+ }
 }
+
 async function borrow(){
  try{
   const asset=currentAsset(), amount=parseAssetAmount(document.getElementById("borrowAmount").value);
   log(`Borrowing ${formatAmountFor(asset,amount)}...`);
   const tx=await pool.borrow(asset.address,amount);
-  log("Borrow tx sent: "+tx.hash); await tx.wait(); log("Borrow confirmed."); await refreshData();
- }catch(e){log("Borrow failed: "+(e.shortMessage||e.message))}
+  log("Borrow tx sent: "+tx.hash);
+  await tx.wait();
+  log("Borrow confirmed.");
+  await refreshData();
+ }catch(e){
+  log("Borrow failed: "+(e.shortMessage||e.message));
+ }
 }
+
 async function repay(){
  try{
   const asset=currentAsset(), amount=parseAssetAmount(document.getElementById("repayAmount").value);
   log(`Repaying ${formatAmountFor(asset,amount)}...`);
-  const tx=await pool.repay(asset.address,amount,account,asset.native?{value:amount}:{});
-  log("Repay tx sent: "+tx.hash); await tx.wait(); log("Repay confirmed."); await refreshData();
- }catch(e){log("Repay failed: "+(e.shortMessage||e.message))}
+  const tx=await pool.repay(asset.address,amount,account);
+  log("Repay tx sent: "+tx.hash);
+  await tx.wait();
+  log("Repay confirmed.");
+  await refreshData();
+ }catch(e){
+  log("Repay failed: "+(e.shortMessage||e.message));
+ }
 }
+
 function fillDemo(){
  const asset=currentAsset();
- if(asset.symbol==="cirBTC"){approveAmount.value="0.01";supplyAmount.value="0.001";withdrawAmount.value="0.0005";borrowAmount.value="0.0005";repayAmount.value="0.00025"}
- else{approveAmount.value="10";supplyAmount.value="1";withdrawAmount.value="0.5";borrowAmount.value="0.5";repayAmount.value="0.25"}
+ if(asset.symbol==="cirBTC"){
+  approveAmount.value="0.01";
+  supplyAmount.value="0.001";
+  withdrawAmount.value="0.0005";
+  borrowAmount.value="0.0005";
+  repayAmount.value="0.00025";
+ }else{
+  approveAmount.value="10";
+  supplyAmount.value="1";
+  withdrawAmount.value="0.5";
+  borrowAmount.value="0.5";
+  repayAmount.value="0.25";
+ }
  log("Demo values filled for "+asset.symbol+".");
 }
+
 document.getElementById("connectBtn").addEventListener("click",connectWallet);
-if(window.ethereum){window.ethereum.on("accountsChanged",()=>window.location.reload());window.ethereum.on("chainChanged",()=>window.location.reload())}
+if(window.ethereum){
+ window.ethereum.on("accountsChanged",()=>window.location.reload());
+ window.ethereum.on("chainChanged",()=>window.location.reload());
+}
 </script>
 </body>
 </html>
+
