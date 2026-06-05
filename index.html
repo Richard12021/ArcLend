@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ArcLend — Native USDC Lending</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #07120f;
+      --card: rgba(255,255,255,0.08);
+      --card2: rgba(255,255,255,0.12);
+      --text: #f4fff9;
+      --muted: #9fb7ad;
+      --accent: #ff7a1a;
+      --green: #38e08b;
+      --red: #ff5c5c;
+      --border: rgba(255,255,255,0.16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,122,26,.22), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(56,224,139,.14), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 50px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    h1 { margin: 0; font-size: 34px; letter-spacing: -0.04em; }
+    .subtitle { color: var(--muted); }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 17px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #111;
+      background: linear-gradient(135deg, var(--accent), #ffd166);
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .ghost {
+      color: var(--text);
+      background: var(--card2);
+      border: 1px solid var(--border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .stat, .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    }
+    .label { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+    .value { font-size: 24px; font-weight: 900; word-break: break-word; }
+    .main {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+    .box {
+      background: rgba(0,0,0,.18);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 15px;
+    }
+    h2 { margin: 0 0 14px; font-size: 20px; }
+    h3 { margin: 0 0 12px; font-size: 16px; }
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      outline: none;
+      background: rgba(0,0,0,.24);
+      color: var(--text);
+      padding: 13px 14px;
+      border-radius: 13px;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .row button { flex: 1; }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .addr {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: var(--green);
+      word-break: break-all;
+    }
+    #log {
+      min-height: 160px;
+      max-height: 320px;
+      overflow: auto;
+      background: rgba(0,0,0,.25);
+      border-radius: 16px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .main { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      header { flex-direction: column; align-items: stretch; }
+      .grid, .actions { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>ArcLend</h1>
+        <div class="subtitle">Native USDC lending market on Arc Testnet</div>
+      </div>
+      <button id="connectBtn">Connect Wallet</button>
+    </header>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <div class="label">Contract</div>
+          <div class="addr" id="contractAddr"></div>
+        </div>
+        <span class="pill" id="networkStatus">Not connected</span>
+      </div>
+      <div class="small" style="margin-top:12px;">
+        Native USDC asset: <span class="addr">0x3600000000000000000000000000000000000000</span>
+      </div>
+    </div>
+
+    <section class="grid">
+      <div class="stat">
+        <div class="label">Your Supplied</div>
+        <div class="value" id="supplied">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Your Borrowed</div>
+        <div class="value" id="borrowed">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Pool Supplied</div>
+        <div class="value" id="poolSupplied">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Pool Borrowed</div>
+        <div class="value" id="poolBorrowed">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Health Factor</div>
+        <div class="value" id="healthFactor">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Available Borrow</div>
+        <div class="value" id="availableBorrow">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Supply APY / Borrow APR</div>
+        <div class="value" id="rates">-</div>
+      </div>
+      <div class="stat">
+        <div class="label">Utilization</div>
+        <div class="value" id="utilization">-</div>
+      </div>
+    </section>
+
+    <section class="main">
+      <div class="panel">
+        <h2>Actions</h2>
+        <div class="actions">
+          <div class="box">
+            <h3>Supply USDC</h3>
+            <input id="supplyAmount" placeholder="Amount, e.g. 1" />
+            <button onclick="supply()">Supply</button>
+            <div class="small">For native USDC, this sends the same amount as transaction value.</div>
+          </div>
+
+          <div class="box">
+            <h3>Withdraw USDC</h3>
+            <input id="withdrawAmount" placeholder="Amount, e.g. 0.5" />
+            <button onclick="withdraw()">Withdraw</button>
+          </div>
+
+          <div class="box">
+            <h3>Borrow USDC</h3>
+            <input id="borrowAmount" placeholder="Amount, e.g. 0.5" />
+            <button onclick="borrow()">Borrow</button>
+          </div>
+
+          <div class="box">
+            <h3>Repay USDC</h3>
+            <input id="repayAmount" placeholder="Amount, e.g. 0.25" />
+            <button onclick="repay()">Repay</button>
+            <div class="small">For native USDC repay, transaction value must equal repay amount.</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="ghost" onclick="refreshData()">Refresh Data</button>
+          <button class="ghost" onclick="fillDemo()">Fill Demo Values</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Activity Log</h2>
+        <div id="log">Ready.</div>
+      </div>
+    </section>
+  </div>
+
+<script>
+const POOL_ADDRESS = "0xC110d14fCfD853b7B33E0e6b4648C73317D7AE6f";
+const NATIVE_USDC = "0x3600000000000000000000000000000000000000";
+const ARC_CHAIN_ID_DEC = 5042002;
+const ARC_CHAIN_ID_HEX = "0x4CF1DA";
+
+const ABI = [
+  "function supply(address asset,uint256 amount) payable",
+  "function withdraw(address asset,uint256 amount)",
+  "function borrow(address asset,uint256 amount)",
+  "function repay(address asset,uint256 amount,address onBehalfOf) payable",
+  "function getUserSupplied(address user,address asset) view returns (uint256)",
+  "function getUserBorrowed(address user,address asset) view returns (uint256)",
+  "function getHealthFactor(address user) view returns (uint256)",
+  "function getMaxBorrow(address user,address asset) view returns (uint256)",
+  "function getSupplyRate(address asset) view returns (uint256)",
+  "function getBorrowRate(address asset) view returns (uint256)",
+  "function getUtilization(address asset) view returns (uint256)",
+  "function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)"
+];
+
+let provider;
+let signer;
+let account;
+let pool;
+
+document.getElementById("contractAddr").textContent = POOL_ADDRESS;
+
+function log(msg) {
+  const el = document.getElementById("log");
+  const time = new Date().toLocaleTimeString();
+  el.textContent = `[${time}] ${msg}\n` + el.textContent;
+}
+
+function parseUSDC(value) {
+  if (!value || Number(value) <= 0) throw new Error("Enter a valid amount");
+  return ethers.parseUnits(value, 6);
+}
+
+function formatUSDC(value) {
+  return Number(ethers.formatUnits(value, 6)).toLocaleString(undefined, {
+    maximumFractionDigits: 6
+  }) + " USDC";
+}
+
+function formatPrecision(value, digits = 2) {
+  const n = Number(ethers.formatUnits(value, 18));
+  if (!Number.isFinite(n)) return "-";
+  if (n > 1_000_000) return "∞";
+  return n.toLocaleString(undefined, { maximumFractionDigits: digits });
+}
+
+function formatPercent(value, digits = 2) {
+  const n = Number(ethers.formatUnits(value, 18)) * 100;
+  if (!Number.isFinite(n)) return "-";
+  return n.toLocaleString(undefined, { maximumFractionDigits: digits }) + "%";
+}
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert("Please install MetaMask or OKX Wallet.");
+    return;
+  }
+
+  provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+
+  await ensureArcNetwork();
+
+  provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+  pool = new ethers.Contract(POOL_ADDRESS, ABI, signer);
+
+  document.getElementById("connectBtn").textContent =
+    account.slice(0, 6) + "..." + account.slice(-4);
+  document.getElementById("networkStatus").textContent = "Arc Testnet connected";
+
+  log("Wallet connected: " + account);
+  await refreshData();
+}
+
+async function ensureArcNetwork() {
+  const network = await provider.getNetwork();
+  if (Number(network.chainId) === ARC_CHAIN_ID_DEC) return;
+
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: ARC_CHAIN_ID_HEX }]
+    });
+  } catch (switchError) {
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [{
+        chainId: ARC_CHAIN_ID_HEX,
+        chainName: "Arc Testnet",
+        nativeCurrency: {
+          name: "USDC",
+          symbol: "USDC",
+          decimals: 6
+        },
+        rpcUrls: ["https://rpc.testnet.arc.network"],
+        blockExplorerUrls: ["https://testnet.arcscan.app"]
+      }]
+    });
+  }
+}
+
+async function refreshData() {
+  if (!pool || !account) return;
+
+  const [
+    supplied,
+    borrowed,
+    state,
+    healthFactor,
+    maxBorrow,
+    supplyRate,
+    borrowRate,
+    utilization
+  ] = await Promise.all([
+    pool.getUserSupplied(account, NATIVE_USDC),
+    pool.getUserBorrowed(account, NATIVE_USDC),
+    pool.poolStates(NATIVE_USDC),
+    pool.getHealthFactor(account),
+    pool.getMaxBorrow(account, NATIVE_USDC),
+    pool.getSupplyRate(NATIVE_USDC),
+    pool.getBorrowRate(NATIVE_USDC),
+    pool.getUtilization(NATIVE_USDC)
+  ]);
+
+  document.getElementById("supplied").textContent = formatUSDC(supplied);
+  document.getElementById("borrowed").textContent = formatUSDC(borrowed);
+  document.getElementById("poolSupplied").textContent = formatUSDC(state.totalSupplied);
+  document.getElementById("poolBorrowed").textContent = formatUSDC(state.totalBorrowed);
+
+  document.getElementById("healthFactor").textContent =
+    borrowed === 0n ? "∞" : formatPrecision(healthFactor, 3);
+
+  document.getElementById("availableBorrow").textContent = formatUSDC(maxBorrow);
+
+  document.getElementById("rates").innerHTML =
+    `<span style="font-size:18px;">${formatPercent(supplyRate)} / ${formatPercent(borrowRate)}</span>`;
+
+  document.getElementById("utilization").textContent = formatPercent(utilization);
+
+  log("Data refreshed.");
+}
+
+async function supply() {
+  try {
+    const amount = parseUSDC(document.getElementById("supplyAmount").value);
+    log("Supplying " + formatUSDC(amount) + "...");
+    const tx = await pool.supply(NATIVE_USDC, amount, { value: amount });
+    log("Supply tx sent: " + tx.hash);
+    await tx.wait();
+    log("Supply confirmed.");
+    await refreshData();
+  } catch (e) {
+    log("Supply failed: " + (e.shortMessage || e.message));
+  }
+}
+
+async function withdraw() {
+  try {
+    const amount = parseUSDC(document.getElementById("withdrawAmount").value);
+    log("Withdrawing " + formatUSDC(amount) + "...");
+    const tx = await pool.withdraw(NATIVE_USDC, amount);
+    log("Withdraw tx sent: " + tx.hash);
+    await tx.wait();
+    log("Withdraw confirmed.");
+    await refreshData();
+  } catch (e) {
+    log("Withdraw failed: " + (e.shortMessage || e.message));
+  }
+}
+
+async function borrow() {
+  try {
+    const amount = parseUSDC(document.getElementById("borrowAmount").value);
+    log("Borrowing " + formatUSDC(amount) + "...");
+    const tx = await pool.borrow(NATIVE_USDC, amount);
+    log("Borrow tx sent: " + tx.hash);
+    await tx.wait();
+    log("Borrow confirmed.");
+    await refreshData();
+  } catch (e) {
+    log("Borrow failed: " + (e.shortMessage || e.message));
+  }
+}
+
+async function repay() {
+  try {
+    const amount = parseUSDC(document.getElementById("repayAmount").value);
+    log("Repaying " + formatUSDC(amount) + "...");
+    const tx = await pool.repay(NATIVE_USDC, amount, account, { value: amount });
+    log("Repay tx sent: " + tx.hash);
+    await tx.wait();
+    log("Repay confirmed.");
+    await refreshData();
+  } catch (e) {
+    log("Repay failed: " + (e.shortMessage || e.message));
+  }
+}
+
+function fillDemo() {
+  document.getElementById("supplyAmount").value = "1";
+  document.getElementById("withdrawAmount").value = "0.5";
+  document.getElementById("borrowAmount").value = "0.5";
+  document.getElementById("repayAmount").value = "0.25";
+  log("Demo values filled.");
+}
+
+document.getElementById("connectBtn").addEventListener("click", connectWallet);
+
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", () => window.location.reload());
+  window.ethereum.on("chainChanged", () => window.location.reload());
+}
+</script>
+</body>
+</html>
