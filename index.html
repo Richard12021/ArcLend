@@ -236,6 +236,7 @@ async function connectWallet(){
  signer=await provider.getSigner();account=await signer.getAddress();await ensureArcNetwork();
  provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
  pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);connected=true;
+ localStorage.setItem("walletConnected","true");
  document.getElementById("connectBtn").innerHTML=account.slice(0,6)+"..."+account.slice(-4)+" ▾";
  document.getElementById("walletFullAddr").textContent=account;
  document.getElementById("arcscanLink").href=ARCSCAN_BASE+account;
@@ -244,11 +245,43 @@ async function connectWallet(){
 }
 function toggleWalletMenu(){document.getElementById("walletMenu").classList.toggle("open")}
 async function copyWallet(){await navigator.clipboard.writeText(account);setStatus("Wallet copied.")}
-function disconnectWallet(){connected=false;account=null;pool=null;document.getElementById("walletMenu").classList.remove("open");document.getElementById("connectBtn").textContent="Connect Wallet";document.getElementById("connectBtn").onclick=connectWallet;setStatus("Disconnected.")}
+function disconnectWallet(){localStorage.removeItem("walletConnected"); connected=false;account=null;pool=null;document.getElementById("walletMenu").classList.remove("open");document.getElementById("connectBtn").textContent="Connect Wallet";document.getElementById("connectBtn").onclick=connectWallet;setStatus("Disconnected.")}
 async function ensureArcNetwork(){
- const network=await provider.getNetwork();if(Number(network.chainId)===ARC_CHAIN_ID_DEC)return;
- try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX}]})}
- catch(e){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:["https://rpc.testnet.arc.network"],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}
+ const chainId = await window.ethereum.request({ method: "eth_chainId" });
+
+ if(chainId === ARC_CHAIN_ID_HEX){
+  return true;
+ }
+
+ try{
+  await window.ethereum.request({
+   method:"wallet_switchEthereumChain",
+   params:[{ chainId: ARC_CHAIN_ID_HEX }]
+  });
+
+  return true;
+ }catch(e){
+  if(e.code === 4902){
+   await window.ethereum.request({
+    method:"wallet_addEthereumChain",
+    params:[{
+     chainId: ARC_CHAIN_ID_HEX,
+     chainName:"Arc Testnet",
+     nativeCurrency:{
+      name:"ETH",
+      symbol:"ETH",
+      decimals:18
+     },
+     rpcUrls:["https://rpc.testnet.arc.network"],
+     blockExplorerUrls:["https://testnet.arcscan.app"]
+    }]
+   });
+
+   return true;
+  }
+
+  throw e;
+ }
 }
 async function loadBalances(){
  if(!connected)return;
@@ -293,8 +326,56 @@ async function withdraw(){try{const asset=currentAsset(),amount=parseAssetAmount
 async function borrow(){try{const asset=currentAsset(),amount=parseAssetAmount(borrowAmount.value);setStatus(`Borrowing ${formatAmountFor(asset,amount)}...`);const tx=await pool.borrow(asset.address,amount);await tx.wait();setStatus("Borrow confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Borrow failed: "+(e.shortMessage||e.message))}}
 async function repay(){try{const asset=currentAsset(),amount=parseAssetAmount(repayAmount.value);await ensureAllowance(asset,amount);setStatus(`Repaying ${formatAmountFor(asset,amount)}...`);const tx=await pool.repay(asset.address,amount,account);await tx.wait();setStatus("Repay confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Repay failed: "+(e.shortMessage||e.message))}}
 function fillDemo(){const asset=currentAsset();if(asset.symbol==="cirBTC"){supplyAmount.value="0.001";withdrawAmount.value="0.0005";borrowAmount.value="0.0005";repayAmount.value="0.00025"}else{supplyAmount.value="1";withdrawAmount.value="0.5";borrowAmount.value="0.5";repayAmount.value="0.25"}setStatus("Demo values filled.")}
+async function autoReconnect(){
+ if(!window.ethereum || localStorage.getItem("walletConnected") !== "true"){
+  return;
+ }
+
+ try{
+  provider = new ethers.BrowserProvider(window.ethereum);
+
+  const accounts = await provider.listAccounts();
+
+  if(!accounts || accounts.length === 0){
+   return;
+  }
+
+  const chainId = await window.ethereum.request({ method:"eth_chainId" });
+
+  if(chainId !== ARC_CHAIN_ID_HEX){
+   return;
+  }
+
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+
+  pool = new ethers.Contract(POOL_ADDRESS, POOL_ABI, signer);
+  connected = true;
+
+  document.getElementById("connectBtn").innerHTML =
+   account.slice(0,6) + "..." + account.slice(-4) + " ▾";
+
+  document.getElementById("walletFullAddr").textContent = account;
+  document.getElementById("arcscanLink").href = ARCSCAN_BASE + account;
+
+  document.getElementById("connectBtn").onclick = toggleWalletMenu;
+
+  await refreshData();
+  await loadMarkets();
+  await loadBalances();
+ }catch(e){
+  console.log(e);
+ }
+}
+
 document.getElementById("connectBtn").onclick=connectWallet;
-if(window.ethereum){window.ethereum.on("accountsChanged",()=>window.location.reload());window.ethereum.on("chainChanged",()=>window.location.reload())}
+
+window.addEventListener("load",autoReconnect);
+
+if(window.ethereum){
+ window.ethereum.on("accountsChanged",()=>window.location.reload());
+ window.ethereum.on("chainChanged",()=>window.location.reload());
+}
 </script>
 </body>
 </html>
