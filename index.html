@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ArcLend — Lending on Arc</title>
+<title>Avara — Lending/Borrowing on Arc</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 <style>
 :root{
@@ -24,10 +24,30 @@ body{
 .wrap{max-width:1180px;margin:0 auto;padding:18px 18px 56px}
 nav{display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20;padding:8px 0 18px;backdrop-filter:blur(14px)}
 .logo{display:flex;align-items:center;gap:10px;font-weight:950}
+.brandLogo{
+ width:38px;
+ height:38px;
+ object-fit:contain;
+ flex-shrink:0;
+}
+
+.logo{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:900;
+ font-size:20px;
+}
 .logoMark{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 0 28px rgba(79,140,255,.35)}
 .navLinks{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .navLinks button,.navLinks a{color:var(--muted);text-decoration:none;font-weight:800;font-size:13px;background:transparent;border:1px solid transparent;box-shadow:none;padding:9px 11px;border-radius:10px}
 .navLinks button:hover,.navLinks a:hover{color:var(--text);border-color:var(--border);transform:none;box-shadow:none}
+.navLinks .activeTab{
+ background:linear-gradient(135deg,#4f8cff,#6ee7ff);
+ color:white !important;
+ border-color:transparent !important;
+ box-shadow:0 0 15px rgba(79,140,255,.35);
+}
 button{border:0;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;color:#06101f;background:linear-gradient(135deg,var(--primary),var(--primary2));transition:.12s;box-shadow:0 12px 30px rgba(79,140,255,.18)}
 button:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(79,140,255,.25)}
 button:disabled{opacity:.45;cursor:not-allowed;transform:none}
@@ -79,18 +99,107 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
 .small{font-size:13px;line-height:1.55}.statusBox{margin-top:14px;min-height:20px;color:var(--muted);font-size:13px}
 @media(max-width:980px){.hero{grid-template-columns:1fr;min-height:auto}.portfolioGrid,.dashboardGrid{grid-template-columns:repeat(2,1fr)}.assetbar{grid-template-columns:1fr}.how{grid-template-columns:repeat(2,1fr)}h1{font-size:48px}}
 @media(max-width:560px){nav{flex-direction:column;align-items:stretch}.navLinks{justify-content:center}.portfolioGrid,.dashboardGrid,.actions,.how{grid-template-columns:1fr}h1{font-size:40px}.heroActions button{width:100%}.walletMenu{right:auto;left:0;width:100%}}
+.docsLayout{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  gap:24px;
+}
+
+.docsSidebar{
+  position:sticky;
+  top:90px;
+  align-self:start;
+}
+
+.docsSidebar button{
+  width:100%;
+  text-align:left;
+  margin-bottom:8px;
+  background:transparent;
+  color:var(--muted);
+  border:1px solid transparent;
+  box-shadow:none;
+}
+
+.docsSidebar button.activeDoc{
+  background:rgba(79,140,255,.14);
+  color:var(--primary2);
+  border-color:rgba(110,231,255,.35);
+}
+
+.docsContentBlock{
+  display:none;
+}
+
+.docsContentBlock.activeDocContent{
+  display:block;
+}
+
+.docsLinks{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  display:flex;
+  gap:10px;
+  z-index:30;
+}
+
+.docsLinks a{
+  text-decoration:none;
+  padding:11px 14px;
+  border-radius:14px;
+  background:var(--card2);
+  color:var(--text);
+  border:1px solid var(--border);
+  font-weight:900;
+}
+
+@media(max-width:800px){
+  .docsLayout{grid-template-columns:1fr}
+  .docsSidebar{position:relative;top:0}
+  .docsLinks{position:relative;right:auto;bottom:auto;margin-top:20px}
+}
+.assetCell{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.tokenLogo{
+ width:30px;
+ height:30px;
+ border-radius:50%;
+ object-fit:cover;
+ flex-shrink:0;
+}
+
+.rateSupply{
+  color:var(--success);
+  font-weight:900;
+}
+
+.rateBorrow{
+  color:var(--danger);
+  font-weight:900;
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 <nav>
-  <div class="logo"><div class="logoMark"></div>ArcLend</div>
+<div class="logo">
+  <img src="assets/logo/avara.png" class="brandLogo">
+  <span>Avara</span>
+</div>
   <div class="navLinks">
-    <button onclick="showScreen('home')">Home</button>
-    <button onclick="showScreen('markets')">Markets</button>
-    <button onclick="showScreen('portfolio')">Portfolio</button>
-    <button onclick="showScreen('app')">App</button>
-    <a href="https://faucet.circle.com/" target="_blank">Faucet</a>
+<button class="navBtn activeTab" onclick="showScreen('home',this)">Home</button>
+    <button class="navBtn" onclick="showScreen('markets',this)">Markets</button>
+<button class="navBtn" onclick="showScreen('portfolio',this)">Portfolio</button>
+<button class="navBtn" onclick="showScreen('app',this)">App</button>
+<button class="navBtn" onclick="showScreen('liquidation',this)">Liquidation</button>
+<button class="navBtn" onclick="showScreen('activity',this)">Activity</button>
+<button class="navBtn" onclick="showScreen('docs',this)">Docs</button>
+<a href="https://faucet.circle.com/" target="_blank">Faucet</a>
   </div>
   <div class="walletBox">
     <button id="connectBtn" class="walletBtn">Connect Wallet</button>
@@ -113,7 +222,7 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
     <div>
       <div class="eyebrow">Built on Arc Testnet</div>
       <h1>Borrow liquidity.<br/><span class="grad">Earn on idle capital.</span></h1>
-      <p>ArcLend is a clean multi-asset lending market for USDC, EURC, and cirBTC. Supply assets, borrow against collateral, and manage risk in real time.</p>
+      <p>Avara is a clean multi-asset lending market for USDC, EURC, and cirBTC. Supply assets, borrow against collateral, and manage risk in real time.</p>
       <div class="heroActions">
         <button onclick="showScreen('app')">Launch App</button>
         <button class="ghost" onclick="showScreen('markets')">View Markets</button>
@@ -138,7 +247,7 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
 </section>
 
 <section id="markets" class="screen">
-  <div class="sectionTitle"><div><h2>Markets</h2><p>Live lending markets from the ArcLend contract.</p></div></div>
+  <div class="sectionTitle"><div><h2>Markets</h2><p>Live lending markets from the Avara contract.</p></div></div>
   <div class="panel">
     <table>
       <thead><tr><th>Asset</th><th>Total Supplied</th><th>Total Borrowed</th><th>Supply APY</th><th>Borrow APR</th><th>Utilization</th></tr></thead>
@@ -158,7 +267,7 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
 </section>
 
 <section id="app" class="screen">
-  <div class="sectionTitle"><div><h2>ArcLend App</h2><p>Select a market and interact with the protocol.</p></div></div>
+  <div class="sectionTitle"><div><h2>Avara App</h2><p>Select a market and interact with the protocol.</p></div></div>
   <section class="assetbar">
     <div class="panel">
       <div class="label">Selected Market</div>
@@ -196,34 +305,389 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
     </div>
   </section>
 </section>
+
+<section id="liquidation" class="screen">
+  <div class="sectionTitle">
+    <div>
+      <h2>Liquidation</h2>
+      <p>Repay unhealthy debt and receive collateral with liquidation bonus.</p>
+    </div>
+  </div>
+
+  <section class="dashboardGrid">
+    <div class="stat">
+      <div class="label">Borrower Health Factor</div>
+      <div class="value" id="liqHealthFactor">-</div>
+      <div class="riskLabel" id="liqHealthStatus">Paste borrower address and check.</div>
+    </div>
+    <div class="stat">
+      <div class="label">Borrower Debt</div>
+      <div class="value" id="liqBorrowed">-</div>
+    </div>
+    <div class="stat">
+      <div class="label">Borrower Collateral</div>
+      <div class="value" id="liqCollateral">-</div>
+    </div>
+    <div class="stat">
+      <div class="label">Max Liquidation</div>
+      <div class="value" id="liqMax">-</div>
+    </div>
+  </section>
+
+  <section class="main">
+    <div class="panel">
+      <h2>Liquidate Position</h2>
+      <div class="actions">
+        <div class="box">
+          <h3>Borrower</h3>
+          <input id="liqBorrower" placeholder="Borrower address, e.g. 0x..." />
+          <button class="ghost" onclick="checkLiquidation()">Check Position</button>
+        </div>
+
+        <div class="box">
+          <h3>Debt Asset</h3>
+          <select id="liqDebtAsset" onchange="checkLiquidation()">
+            <option value="USDC">USDC</option>
+            <option value="EURC">EURC</option>
+            <option value="cirBTC">cirBTC</option>
+          </select>
+          <div class="small">Asset you repay on behalf of the borrower.</div>
+        </div>
+
+        <div class="box">
+          <h3>Collateral Asset</h3>
+          <select id="liqCollateralAsset" onchange="checkLiquidation()">
+            <option value="USDC">USDC</option>
+            <option value="EURC">EURC</option>
+            <option value="cirBTC">cirBTC</option>
+          </select>
+          <div class="small">Asset you receive from borrower collateral.</div>
+        </div>
+
+        <div class="box">
+          <h3>Debt Amount</h3>
+          <input id="liqDebtAmount" placeholder="Amount, e.g. 0.15" />
+          <button onclick="liquidatePosition()">Liquidate</button>
+          <div class="small">Auto-approve debt asset if allowance is not enough.</div>
+        </div>
+      </div>
+      <div class="statusBox" id="liqStatusBox">Ready.</div>
+    </div>
+  </section>
+</section>
+
+<section id="activity" class="screen">
+  <div class="sectionTitle">
+    <div>
+      <h2>Activity</h2>
+      <p>Recent actions from your browser session.</p>
+    </div>
+    <button class="ghost" onclick="clearActivity()">Clear Activity</button>
+  </div>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Asset</th>
+          <th>Amount</th>
+          <th>Time</th>
+          <th>Tx</th>
+        </tr>
+      </thead>
+      <tbody id="activityTable">
+        <tr>
+          <td colspan="5">No activity yet.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div id="marketModal" class="screen" style="display:none;">
+  <div class="panel" style="max-width:720px;margin:40px auto;">
+    <div class="sectionTitle" style="margin-top:0;">
+      <div>
+        <h2 id="modalAssetTitle">Market Detail</h2>
+        <p id="modalAssetAddress">-</p>
+      </div>
+      <button class="ghost" onclick="closeMarketModal()">Close</button>
+    </div>
+
+    <section class="dashboardGrid">
+      <div class="stat"><div class="label">Total Supplied</div><div class="value" id="modalSupplied">-</div></div>
+      <div class="stat"><div class="label">Total Borrowed</div><div class="value" id="modalBorrowed">-</div></div>
+      <div class="stat"><div class="label">Supply APY</div><div class="value" id="modalSupplyRate">-</div></div>
+      <div class="stat"><div class="label">Borrow APR</div><div class="value" id="modalBorrowRate">-</div></div>
+      <div class="stat"><div class="label">Utilization</div><div class="value" id="modalUtilization">-</div></div>
+      <div class="stat"><div class="label">Collateral Factor</div><div class="value" id="modalCollateralFactor">-</div></div>
+      <div class="stat"><div class="label">Liquidation Threshold</div><div class="value" id="modalLiqThreshold">-</div></div>
+      <div class="stat"><div class="label">Oracle Price</div><div class="value" id="modalPrice">-</div></div>
+    </section>
+
+    <div class="row" style="margin-top:16px;">
+      <button onclick="goToAssetAction('supply')">Supply</button>
+      <button class="ghost" onclick="goToAssetAction('borrow')">Borrow</button>
+    </div>
+  </div>
 </div>
+
+</div>
+
+<section id="docs" class="screen">
+  <div class="sectionTitle">
+    <div>
+      <h2>Avara Docs</h2>
+      <p>Everything you need to know about Avara on Arc Testnet.</p>
+    </div>
+  </div>
+
+  <div class="docsLayout">
+    <aside class="docsSidebar">
+      <button class="docBtn activeDoc" onclick="showDoc('what',this)">What is Avara?</button>
+      <button class="docBtn" onclick="showDoc('assets',this)">Supported Assets</button>
+      <button class="docBtn" onclick="showDoc('supply',this)">Supply</button>
+      <button class="docBtn" onclick="showDoc('borrow',this)">Borrow</button>
+      <button class="docBtn" onclick="showDoc('repay',this)">Repay</button>
+      <button class="docBtn" onclick="showDoc('withdraw',this)">Withdraw</button>
+      <button class="docBtn" onclick="showDoc('rates',this)">Interest Rates</button>
+      <button class="docBtn" onclick="showDoc('health',this)">Health Factor</button>
+      <button class="docBtn" onclick="showDoc('liquidationDocs',this)">Liquidation</button>
+      <button class="docBtn" onclick="showDoc('marketsDocs',this)">Markets</button>
+      <button class="docBtn" onclick="showDoc('faq',this)">FAQ</button>
+    </aside>
+
+    <div class="panel">
+      <div id="doc-what" class="docsContentBlock activeDocContent">
+        <h2>What is Avara?</h2>
+        <p class="small">Avara is a multi-asset lending protocol on Arc Testnet. Users can supply assets, borrow against collateral, repay debt, withdraw liquidity, and monitor risk through Health Factor and liquidation mechanics.</p>
+      </div>
+
+      <div id="doc-assets" class="docsContentBlock">
+        <h2>Supported Assets</h2>
+        <p class="small">Avara currently supports USDC, EURC, and cirBTC. Each asset has its own market, utilization, supply APY, borrow APR, collateral factor, liquidation threshold, and oracle price.</p>
+      </div>
+
+      <div id="doc-supply" class="docsContentBlock">
+        <h2>Supply</h2>
+        <p class="small">Supplying means depositing assets into Avara. Supplied assets can be used as collateral and may earn yield depending on market utilization.</p>
+      </div>
+
+      <div id="doc-borrow" class="docsContentBlock">
+        <h2>Borrow</h2>
+        <p class="small">Borrowing lets users take liquidity from the pool against their supplied collateral. Borrow power depends on collateral value, asset risk parameters, and current debt.</p>
+      </div>
+
+      <div id="doc-repay" class="docsContentBlock">
+        <h2>Repay</h2>
+        <p class="small">Repaying reduces your debt and improves your Health Factor. If your Health Factor is close to 1.0, repaying helps lower liquidation risk.</p>
+      </div>
+
+      <div id="doc-withdraw" class="docsContentBlock">
+        <h2>Withdraw</h2>
+        <p class="small">Users can withdraw supplied assets if the pool has enough liquidity and the withdrawal does not make their position unsafe.</p>
+      </div>
+
+      <div id="doc-rates" class="docsContentBlock">
+        <h2>Interest Rates</h2>
+        <p class="small">Supply APY and Borrow APR are based on utilization. When more assets are borrowed, utilization rises, which can increase borrowing costs and supplier yield.</p>
+      </div>
+
+      <div id="doc-health" class="docsContentBlock">
+        <h2>Health Factor</h2>
+        <p class="small">Health Factor measures account safety. If Health Factor is above 1.0, the account is healthy. If it falls below 1.0, the account becomes eligible for liquidation.</p>
+      </div>
+
+      <div id="doc-liquidationDocs" class="docsContentBlock">
+        <h2>Liquidation</h2>
+        <p class="small">Liquidation protects the protocol when a borrower becomes undercollateralized. A liquidator repays part of the borrower’s debt and receives collateral as a bonus.</p>
+      </div>
+
+      <div id="doc-marketsDocs" class="docsContentBlock">
+        <h2>Markets</h2>
+        <p class="small">The Markets page shows live protocol data including total supplied, total borrowed, utilization, rates, and market details for each supported asset.</p>
+      </div>
+
+      <div id="doc-faq" class="docsContentBlock">
+        <h2>FAQ</h2>
+        <p class="small"><b>Is Avara on mainnet?</b><br/>No, it is currently built for Arc Testnet.</p>
+        <p class="small"><b>Does Avara require approvals?</b><br/>Yes, but the app handles approvals automatically before Supply, Repay, and Liquidation when needed.</p>
+        <p class="small"><b>What happens if Health Factor drops below 1?</b><br/>The position can be liquidated.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="docsLinks">
+    <a href="https://www.arc.io/" target="_blank">Arc Website ↗</a>
+    <a href="https://docs.arc.io/" target="_blank">Arc Docs ↗</a>
+  </div>
+</section>
 
 <script>
 const POOL_ADDRESS="0x1c5E6F86ce0ea764b387Df8fF96959F65fFf90EA";
 const ARCSCAN_BASE="https://testnet.arcscan.app/address/";
 const ASSETS={
-  USDC:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,price:1,balId:"balUSDC"},
-  EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6,price:1.08,balId:"balEURC"},
-  cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8,price:67000,balId:"balBTC"}
+USDC:{
+ symbol:"USDC",
+ address:"0x3600000000000000000000000000000000000000",
+ decimals:6,
+ price:1,
+ balId:"balUSDC",
+ logo:"$",
+  logo:"assets/tokens/usdc.png"
+},
+EURC:{
+ symbol:"EURC",
+ address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",
+ decimals:6,
+ price:1.08,
+ balId:"balEURC",
+ logo:"€",
+   logo:"assets/tokens/eurc.png"
+},
+cirBTC:{
+ symbol:"cirBTC",
+ address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",
+ decimals:8,
+ price:67000,
+ balId:"balBTC",
+ logo:"₿",
+    logo:"assets/tokens/cirbtc.png"
+
+}
 };
 const ARC_CHAIN_ID_DEC=5042002,ARC_CHAIN_ID_HEX="0x4cef52";
 const POOL_ABI=[
- "function supply(address asset,uint256 amount)","function withdraw(address asset,uint256 amount)","function borrow(address asset,uint256 amount)","function repay(address asset,uint256 amount,address onBehalfOf)",
+ "function supply(address asset,uint256 amount)","function withdraw(address asset,uint256 amount)","function borrow(address asset,uint256 amount)","function repay(address asset,uint256 amount,address onBehalfOf)","function liquidate(address borrower,address debtAsset,address collateralAsset,uint256 debtAmount)",
  "function getUserSupplied(address user,address asset) view returns (uint256)","function getUserBorrowed(address user,address asset) view returns (uint256)","function getHealthFactor(address user) view returns (uint256)",
  "function getMaxBorrow(address user,address asset) view returns (uint256)","function getSupplyRate(address asset) view returns (uint256)","function getBorrowRate(address asset) view returns (uint256)","function getUtilization(address asset) view returns (uint256)",
- "function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)"
-];
+"function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)",
+"function assetConfigs(address asset) view returns (bool isSupported,bool isCollateralEnabled,bool isBorrowEnabled,uint256 collateralFactor,uint256 liquidationThreshold,uint256 decimals,uint256 price,string symbol)"];
 const ERC20_ABI=["function approve(address spender,uint256 amount) returns (bool)","function allowance(address owner,address spender) view returns (uint256)","function balanceOf(address account) view returns (uint256)"];
 let provider,signer,account,pool,selectedSymbol="USDC",connected=false;
 
 document.getElementById("contractAddr").textContent=POOL_ADDRESS;
 updateAssetUI();
 
-function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");if(connected){refreshData();loadMarkets();}}
+function showScreen(id, btn){
+
+ document
+  .querySelectorAll(".screen")
+  .forEach(s => s.classList.remove("active"));
+
+ document
+  .getElementById(id)
+  .classList.add("active");
+
+ document
+  .querySelectorAll(".navBtn")
+  .forEach(b => b.classList.remove("activeTab"));
+
+ if(btn){
+  btn.classList.add("activeTab");
+ }
+
+ if(id === "activity"){
+  renderActivity();
+ }
+
+ if(connected){
+  refreshData();
+  loadMarkets();
+ }
+}
+function showDoc(id, btn){
+ document.querySelectorAll(".docBtn").forEach(b=>b.classList.remove("activeDoc"));
+ document.querySelectorAll(".docsContentBlock").forEach(c=>c.classList.remove("activeDocContent"));
+
+ btn.classList.add("activeDoc");
+ document.getElementById("doc-"+id).classList.add("activeDocContent");
+}
 function currentAsset(){return ASSETS[selectedSymbol]}
 function setStatus(msg){document.getElementById("statusBox").textContent=msg}
+function getActivity(){
+ const raw = localStorage.getItem("arcLendActivity");
+ return raw ? JSON.parse(raw) : [];
+}
+
+function saveActivity(item){
+ const list = getActivity();
+
+ list.unshift({
+  ...item,
+  time: new Date().toLocaleString()
+ });
+
+ localStorage.setItem(
+  "arcLendActivity",
+  JSON.stringify(list.slice(0, 20))
+ );
+
+ renderActivity();
+}
+
+function clearActivity(){
+ localStorage.removeItem("arcLendActivity");
+ renderActivity();
+}
+
+function renderActivity(){
+ const table = document.getElementById("activityTable");
+ if(!table) return;
+
+ const list = getActivity();
+
+ if(list.length === 0){
+  table.innerHTML = `<tr><td colspan="5">No activity yet.</td></tr>`;
+  return;
+ }
+
+ table.innerHTML = list.map(item => {
+  const shortTx = item.tx
+   ? item.tx.slice(0, 8) + "..." + item.tx.slice(-6)
+   : "-";
+
+  const txLink = item.tx
+   ? `<a href="https://testnet.arcscan.app/tx/${item.tx}" target="_blank">View ${shortTx}</a>`
+   : "-";
+
+  return `
+   <tr>
+    <td>${item.action}</td>
+    <td>${item.asset}</td>
+    <td>${item.amount}</td>
+    <td>${item.time}</td>
+    <td>${txLink}</td>
+   </tr>
+  `;
+ }).join("");
+}
 function parseAssetAmount(value){const asset=currentAsset();if(!value||Number(value)<=0)throw new Error("Enter a valid amount");return ethers.parseUnits(value,asset.decimals)}
-function formatAmountFor(asset,value){return Number(ethers.formatUnits(value,asset.decimals)).toLocaleString(undefined,{maximumFractionDigits:asset.decimals})+" "+asset.symbol}
+function formatAmountFor(asset,value){
+
+ const amount = Number(
+  ethers.formatUnits(value,asset.decimals)
+ );
+
+ let digits = 2;
+
+ if(amount < 1){
+  digits = 4;
+ }
+
+ if(asset.symbol === "cirBTC"){
+  digits = 6;
+ }
+
+ return amount.toLocaleString(
+  undefined,
+  {
+   minimumFractionDigits:0,
+   maximumFractionDigits:digits
+  }
+ ) + " " + asset.symbol;
+}
 function usd(n){return "$"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
 function formatPrecision(value,digits=2){const n=Number(ethers.formatUnits(value,18));if(!Number.isFinite(n))return "-";if(n>1000000)return "∞";return n.toLocaleString(undefined,{maximumFractionDigits:digits})}
 function formatPercent(value,digits=2){const n=Number(ethers.formatUnits(value,18))*100;if(!Number.isFinite(n))return "-";return n.toLocaleString(undefined,{maximumFractionDigits:digits})+"%"}
@@ -245,7 +709,16 @@ async function connectWallet(){
 }
 function toggleWalletMenu(){document.getElementById("walletMenu").classList.toggle("open")}
 async function copyWallet(){await navigator.clipboard.writeText(account);setStatus("Wallet copied.")}
-function disconnectWallet(){localStorage.removeItem("walletConnected"); connected=false;account=null;pool=null;document.getElementById("walletMenu").classList.remove("open");document.getElementById("connectBtn").textContent="Connect Wallet";document.getElementById("connectBtn").onclick=connectWallet;setStatus("Disconnected.")}
+function disconnectWallet(){
+ localStorage.removeItem("walletConnected");
+ connected=false;
+ account=null;
+ pool=null;
+ document.getElementById("walletMenu").classList.remove("open");
+ document.getElementById("connectBtn").textContent="Connect Wallet";
+ document.getElementById("connectBtn").onclick=connectWallet;
+ setStatus("Disconnected.");
+}
 async function ensureArcNetwork(){
  const chainId = await window.ethereum.request({ method: "eth_chainId" });
 
@@ -299,14 +772,113 @@ function updateRiskUI(healthFactor,totalBorrowedUSD,maxBorrowUSD){
  limitText.textContent=usedPct.toLocaleString(undefined,{maximumFractionDigits:2})+"%";limitBar.style.width=usedPct+"%";
  if(usedPct<60){limitRisk.textContent="Safe borrowing range";setRiskClass(limitRisk,"riskSafe")}else if(usedPct<85){limitRisk.textContent="Moderate risk";setRiskClass(limitRisk,"riskWarn")}else{limitRisk.textContent="High risk — close to borrow limit";setRiskClass(limitRisk,"riskDanger")}
 }
+
+let selectedMarketSymbol = "USDC";
+
+async function openMarketDetail(symbol){
+ if(!pool){
+  alert("Connect wallet first.");
+  return;
+ }
+
+ selectedMarketSymbol = symbol;
+
+ const asset = ASSETS[symbol];
+
+ const [
+  state,
+  supplyRate,
+  borrowRate,
+  utilization,
+  config
+ ] = await Promise.all([
+  pool.poolStates(asset.address),
+  pool.getSupplyRate(asset.address),
+  pool.getBorrowRate(asset.address),
+  pool.getUtilization(asset.address),
+  pool.assetConfigs(asset.address)
+ ]);
+
+ document.getElementById("modalAssetTitle").textContent = asset.symbol + " Market";
+ document.getElementById("modalAssetAddress").textContent = asset.address;
+
+ document.getElementById("modalSupplied").textContent =
+  formatAmountFor(asset,state.totalSupplied);
+
+ document.getElementById("modalBorrowed").textContent =
+  formatAmountFor(asset,state.totalBorrowed);
+
+ document.getElementById("modalSupplyRate").textContent =
+  formatPercent(supplyRate);
+
+ document.getElementById("modalBorrowRate").textContent =
+  formatPercent(borrowRate);
+
+ document.getElementById("modalUtilization").textContent =
+  formatPercent(utilization);
+
+ document.getElementById("modalCollateralFactor").textContent =
+  formatPercent(config.collateralFactor);
+
+ document.getElementById("modalLiqThreshold").textContent =
+  formatPercent(config.liquidationThreshold);
+
+ document.getElementById("modalPrice").textContent =
+  "$" + Number(
+   ethers.formatUnits(config.price,18)
+  ).toLocaleString(undefined,{maximumFractionDigits:4});
+
+ document.getElementById("marketModal").style.display = "block";
+}
+
+function closeMarketModal(){
+ document.getElementById("marketModal").style.display = "none";
+}
+
+function goToAssetAction(type){
+ selectedSymbol = selectedMarketSymbol;
+
+ document.getElementById("assetSelect").value = selectedSymbol;
+ updateAssetUI();
+
+ closeMarketModal();
+ showScreen("app");
+
+ if(type === "supply"){
+  document.getElementById("supplyAmount").focus();
+ }
+
+ if(type === "borrow"){
+  document.getElementById("borrowAmount").focus();
+ }
+}
 async function loadMarkets(){
  if(!pool)return;let rows="",totalSuppliedUSD=0,totalBorrowedUSD=0;
  for(const symbol of Object.keys(ASSETS)){
   const asset=ASSETS[symbol];const [state,supplyRate,borrowRate,utilization]=await Promise.all([pool.poolStates(asset.address),pool.getSupplyRate(asset.address),pool.getBorrowRate(asset.address),pool.getUtilization(asset.address)]);
   const supplied=Number(ethers.formatUnits(state.totalSupplied,asset.decimals)),borrowed=Number(ethers.formatUnits(state.totalBorrowed,asset.decimals));
   totalSuppliedUSD+=supplied*asset.price;totalBorrowedUSD+=borrowed*asset.price;
-  rows+=`<tr><td><div class="assetName">${asset.symbol}</div><div class="small">${asset.address.slice(0,6)}...${asset.address.slice(-4)}</div></td><td>${supplied.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${borrowed.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${formatPercent(supplyRate)}</td><td>${formatPercent(borrowRate)}</td><td>${formatPercent(utilization)}</td></tr>`;
- }
+rows+=`
+<tr onclick="openMarketDetail('${symbol}')" style="cursor:pointer;">
+  <td>
+    <div class="assetCell">
+      <img
+ class="tokenLogo"
+ src="${asset.logo}"
+ alt="${asset.symbol}"
+>
+      <div>
+        <div class="assetName">${asset.symbol}</div>
+        <div class="small">${asset.address.slice(0,6)}...${asset.address.slice(-4)}</div>
+      </div>
+    </div>
+  </td>
+  <td>${supplied.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+  <td>${borrowed.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+  <td><span class="rateSupply">${formatPercent(supplyRate)}</span></td>
+  <td><span class="rateBorrow">${formatPercent(borrowRate)}</span></td>
+  <td>${formatPercent(utilization)}</td>
+</tr>`; }
  document.getElementById("marketTable").innerHTML=rows;document.getElementById("heroSupplied").textContent=usd(totalSuppliedUSD);document.getElementById("heroBorrowed").textContent=usd(totalBorrowedUSD);
 }
 async function refreshData(){
@@ -321,10 +893,60 @@ async function ensureAllowance(asset,amount){
  const token=new ethers.Contract(asset.address,ERC20_ABI,signer);const allowance=await token.allowance(account,POOL_ADDRESS);
  if(allowance<amount){setStatus(`Approving ${asset.symbol}...`);const tx=await token.approve(POOL_ADDRESS,amount);await tx.wait();setStatus(`${asset.symbol} approved.`)}
 }
-async function supply(){try{const asset=currentAsset(),amount=parseAssetAmount(supplyAmount.value);await ensureAllowance(asset,amount);setStatus(`Supplying ${formatAmountFor(asset,amount)}...`);const tx=await pool.supply(asset.address,amount);await tx.wait();setStatus("Supply confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Supply failed: "+(e.shortMessage||e.message))}}
-async function withdraw(){try{const asset=currentAsset(),amount=parseAssetAmount(withdrawAmount.value);setStatus(`Withdrawing ${formatAmountFor(asset,amount)}...`);const tx=await pool.withdraw(asset.address,amount);await tx.wait();setStatus("Withdraw confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Withdraw failed: "+(e.shortMessage||e.message))}}
-async function borrow(){try{const asset=currentAsset(),amount=parseAssetAmount(borrowAmount.value);setStatus(`Borrowing ${formatAmountFor(asset,amount)}...`);const tx=await pool.borrow(asset.address,amount);await tx.wait();setStatus("Borrow confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Borrow failed: "+(e.shortMessage||e.message))}}
-async function repay(){try{const asset=currentAsset(),amount=parseAssetAmount(repayAmount.value);await ensureAllowance(asset,amount);setStatus(`Repaying ${formatAmountFor(asset,amount)}...`);const tx=await pool.repay(asset.address,amount,account);await tx.wait();setStatus("Repay confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Repay failed: "+(e.shortMessage||e.message))}}
+async function supply(){try{const asset=currentAsset(),amount=parseAssetAmount(supplyAmount.value);await ensureAllowance(asset,amount);setStatus(`Supplying ${formatAmountFor(asset,amount)}...`);const tx=await pool.supply(asset.address,amount);const receipt = await tx.wait();
+
+saveActivity({
+ action:"Supply",
+ asset:asset.symbol,
+ amount:formatAmountFor(asset,amount),
+ tx:receipt.hash || tx.hash
+});
+
+setStatus("Supply confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Supply failed: "+(e.shortMessage||e.message))}}
+async function withdraw(){
+ try{
+  const asset=currentAsset(), amount=parseAssetAmount(withdrawAmount.value);
+
+  setStatus(`Withdrawing ${formatAmountFor(asset,amount)}...`);
+
+  const tx=await pool.withdraw(asset.address,amount);
+  const receipt=await tx.wait();
+
+  saveActivity({
+   action:"Withdraw",
+   asset:asset.symbol,
+   amount:formatAmountFor(asset,amount),
+   tx:receipt.hash || tx.hash
+  });
+
+  setStatus("Withdraw confirmed.");
+
+  await refreshData();
+  await loadMarkets();
+
+ }catch(e){
+  setStatus("Withdraw failed: "+(e.shortMessage||e.message));
+ }
+}async function borrow(){try{const asset=currentAsset(),amount=parseAssetAmount(borrowAmount.value);setStatus(`Borrowing ${formatAmountFor(asset,amount)}...`);const tx=await pool.borrow(asset.address,amount);const receipt = await tx.wait();
+
+saveActivity({
+ action:"Borrow",
+ asset:asset.symbol,
+ amount:formatAmountFor(asset,amount),
+ tx:receipt.hash || tx.hash
+});
+
+setStatus("Borrow confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Borrow failed: "+(e.shortMessage||e.message))}}
+async function repay(){try{const asset=currentAsset(),amount=parseAssetAmount(repayAmount.value);await ensureAllowance(asset,amount);setStatus(`Repaying ${formatAmountFor(asset,amount)}...`);const tx=await pool.repay(asset.address,amount,account);const receipt = await tx.wait();
+
+saveActivity({
+ action:"Repay",
+ asset:asset.symbol,
+ amount:formatAmountFor(asset,amount),
+ tx:receipt.hash || tx.hash
+});
+
+setStatus("Repay confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Repay failed: "+(e.shortMessage||e.message))}}
 function fillDemo(){const asset=currentAsset();if(asset.symbol==="cirBTC"){supplyAmount.value="0.001";withdrawAmount.value="0.0005";borrowAmount.value="0.0005";repayAmount.value="0.00025"}else{supplyAmount.value="1";withdrawAmount.value="0.5";borrowAmount.value="0.5";repayAmount.value="0.25"}setStatus("Demo values filled.")}
 async function autoReconnect(){
  if(!window.ethereum || localStorage.getItem("walletConnected") !== "true"){
@@ -368,9 +990,125 @@ async function autoReconnect(){
  }
 }
 
+
+function liqAsset(symbol){
+ return ASSETS[symbol];
+}
+
+function parseAmountForAsset(value, asset){
+ if(!value || Number(value)<=0) throw new Error("Enter a valid amount");
+ return ethers.parseUnits(value, asset.decimals);
+}
+
+function setLiquidationStatus(msg){
+ const el=document.getElementById("liqStatusBox");
+ if(el) el.textContent=msg;
+}
+
+async function checkLiquidation(){
+ if(!pool || !connected){
+  setLiquidationStatus("Connect wallet first.");
+  return;
+ }
+
+ const borrower=document.getElementById("liqBorrower").value.trim();
+ if(!ethers.isAddress(borrower)){
+  setLiquidationStatus("Enter a valid borrower address.");
+  return;
+ }
+
+ const debtAsset=liqAsset(document.getElementById("liqDebtAsset").value);
+ const collateralAsset=liqAsset(document.getElementById("liqCollateralAsset").value);
+
+ try{
+  const [hf, borrowed, collateral]=await Promise.all([
+   pool.getHealthFactor(borrower),
+   pool.getUserBorrowed(borrower,debtAsset.address),
+   pool.getUserSupplied(borrower,collateralAsset.address)
+  ]);
+
+  const maxLiquidation=borrowed/2n;
+
+  document.getElementById("liqHealthFactor").textContent =
+   borrowed===0n ? "∞" : formatPrecision(hf,3);
+
+  document.getElementById("liqBorrowed").textContent =
+   formatAmountFor(debtAsset,borrowed);
+
+  document.getElementById("liqCollateral").textContent =
+   formatAmountFor(collateralAsset,collateral);
+
+  document.getElementById("liqMax").textContent =
+   formatAmountFor(debtAsset,maxLiquidation);
+
+  const hfNum=Number(ethers.formatUnits(hf,18));
+  const status=document.getElementById("liqHealthStatus");
+  setRiskClass(status,"");
+
+  if(borrowed===0n){
+   status.textContent="No active debt.";
+   setRiskClass(status,"riskSafe");
+   setLiquidationStatus("Borrower has no debt in selected debt asset.");
+  }else if(hfNum>=1){
+   status.textContent="Healthy — cannot liquidate.";
+   setRiskClass(status,"riskSafe");
+   setLiquidationStatus("Health Factor is above 1. Liquidation will revert.");
+  }else{
+   status.textContent="Unhealthy — liquidation available.";
+   setRiskClass(status,"riskDanger");
+   setLiquidationStatus("Borrower can be liquidated.");
+  }
+ }catch(e){
+  setLiquidationStatus("Check failed: "+(e.shortMessage||e.message));
+ }
+}
+
+async function liquidatePosition(){
+ try{
+  if(!pool || !connected) throw new Error("Connect wallet first.");
+
+  const borrower=document.getElementById("liqBorrower").value.trim();
+  if(!ethers.isAddress(borrower)) throw new Error("Enter a valid borrower address.");
+
+  const debtAsset=liqAsset(document.getElementById("liqDebtAsset").value);
+  const collateralAsset=liqAsset(document.getElementById("liqCollateralAsset").value);
+  const amount=parseAmountForAsset(document.getElementById("liqDebtAmount").value,debtAsset);
+
+  await ensureAllowance(debtAsset,amount);
+
+  setLiquidationStatus(`Liquidating ${formatAmountFor(debtAsset,amount)} debt...`);
+  const tx=await pool.liquidate(
+   borrower,
+   debtAsset.address,
+   collateralAsset.address,
+   amount
+  );
+
+  const receipt = await tx.wait();
+
+saveActivity({
+ action:"Liquidation",
+ asset:debtAsset.symbol,
+ amount:formatAmountFor(debtAsset,amount),
+ tx:receipt.hash || tx.hash
+});
+
+setLiquidationStatus("Liquidation confirmed.");
+  await checkLiquidation();
+  await refreshData();
+  await loadMarkets();
+ }catch(e){
+  setLiquidationStatus("Liquidation failed: "+(e.shortMessage||e.message));
+ }
+}
+
+
 document.getElementById("connectBtn").onclick=connectWallet;
 
-window.addEventListener("load",autoReconnect);
+window.addEventListener("load",()=>{
+ renderActivity();
+ autoReconnect();
+});
 
 if(window.ethereum){
  window.ethereum.on("accountsChanged",()=>window.location.reload());
