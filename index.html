@@ -580,6 +580,26 @@ function getWalletProvider(){
 document.getElementById("contractAddr").textContent=POOL_ADDRESS;
 updateAssetUI();
 
+async function finalizeWalletConnection(){
+ pool = new ethers.Contract(POOL_ADDRESS, POOL_ABI, signer);
+ connected = true;
+
+ localStorage.setItem("walletConnected","true");
+
+ document.getElementById("connectBtn").innerHTML =
+  account.slice(0,6)+"..."+account.slice(-4)+" ▾";
+
+ document.getElementById("walletFullAddr").textContent = account;
+ document.getElementById("arcscanLink").href = ARCSCAN_BASE + account;
+ document.getElementById("connectBtn").onclick = toggleWalletMenu;
+
+ await refreshData();
+ await loadMarkets();
+ await loadBalances();
+
+ setStatus("Wallet connected.");
+}
+
 function showScreen(id, btn){
 
  document
@@ -705,33 +725,54 @@ function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDan
 function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address}
 async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();if(connected)await refreshData()}
 async function connectWallet(){
+ try{
   const walletProvider = getWalletProvider();
 
-if(!walletProvider){
- alert("Please install or enable an EVM wallet extension such as OKX Wallet or MetaMask.");
- return;
-}
+  if(!walletProvider){
+   alert("Please install or enable an EVM wallet extension such as OKX Wallet or MetaMask.");
+   return;
+  }
 
-provider = new ethers.BrowserProvider(walletProvider);
+  provider = new ethers.BrowserProvider(walletProvider);
 
-const accounts = await walletProvider.request({
- method:"eth_requestAccounts"
-});
+  const accounts = await walletProvider.request({
+   method:"eth_requestAccounts"
+  });
 
-account = accounts[0];
+  if(!accounts || accounts.length === 0){
+   alert("No wallet account found.");
+   return;
+  }
 
-signer = await provider.getSigner(account);
+  account = accounts[0];
 
-await ensureArcNetwork();
-provider=new ethers.BrowserProvider(walletProvider);
-signer=await provider.getSigner(account);
- pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);connected=true;
- localStorage.setItem("walletConnected","true");
- document.getElementById("connectBtn").innerHTML=account.slice(0,6)+"..."+account.slice(-4)+" ▾";
- document.getElementById("walletFullAddr").textContent=account;
- document.getElementById("arcscanLink").href=ARCSCAN_BASE+account;
- document.getElementById("connectBtn").onclick=toggleWalletMenu;
- await refreshData();await loadMarkets();await loadBalances();setStatus("Wallet connected.");
+  await ensureArcNetwork();
+
+  provider = new ethers.BrowserProvider(walletProvider);
+  signer = await provider.getSigner(account);
+
+  pool = new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);
+  connected = true;
+
+  localStorage.setItem("walletConnected","true");
+
+  document.getElementById("connectBtn").innerHTML =
+   account.slice(0,6)+"..."+account.slice(-4)+" ▾";
+
+  document.getElementById("walletFullAddr").textContent = account;
+  document.getElementById("arcscanLink").href = ARCSCAN_BASE + account;
+  document.getElementById("connectBtn").onclick = toggleWalletMenu;
+
+  setStatus("Wallet connected.");
+
+  await loadBalances();
+  await loadMarkets();
+  await refreshData();
+
+ }catch(e){
+  console.error(e);
+  setStatus("Wallet connect failed: "+(e.shortMessage || e.message));
+ }
 }
 function toggleWalletMenu(){document.getElementById("walletMenu").classList.toggle("open")}
 async function copyWallet(){await navigator.clipboard.writeText(account);setStatus("Wallet copied.")}
