@@ -566,7 +566,17 @@ const POOL_ABI=[
 "function assetConfigs(address asset) view returns (bool isSupported,bool isCollateralEnabled,bool isBorrowEnabled,uint256 collateralFactor,uint256 liquidationThreshold,uint256 decimals,uint256 price,string symbol)"];
 const ERC20_ABI=["function approve(address spender,uint256 amount) returns (bool)","function allowance(address owner,address spender) view returns (uint256)","function balanceOf(address account) view returns (uint256)"];
 let provider,signer,account,pool,selectedSymbol="USDC",connected=false;
+function getWalletProvider(){
+ if(window.okxwallet && window.okxwallet.ethereum){
+  return window.okxwallet.ethereum;
+ }
 
+ if(window.ethereum){
+  return window.ethereum;
+ }
+
+ return null;
+}
 document.getElementById("contractAddr").textContent=POOL_ADDRESS;
 updateAssetUI();
 
@@ -695,12 +705,23 @@ function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDan
 function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address}
 async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();if(connected)await refreshData()}
 async function connectWallet(){
-  if(!window.ethereum){
+  const walletProvider = getWalletProvider();
+
+if(!walletProvider){
  alert("Please install or enable an EVM wallet extension such as OKX Wallet or MetaMask.");
  return;
 }
- provider=new ethers.BrowserProvider(window.ethereum);await provider.send("eth_requestAccounts",[]);
- signer=await provider.getSigner();account=await signer.getAddress();await ensureArcNetwork();
+
+provider = new ethers.BrowserProvider(walletProvider);
+
+await walletProvider.request({
+ method:"eth_requestAccounts"
+});
+
+signer = await provider.getSigner();
+account = await signer.getAddress();
+
+await ensureArcNetwork();
  provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
  pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);connected=true;
  localStorage.setItem("walletConnected","true");
@@ -723,14 +744,14 @@ function disconnectWallet(){
  setStatus("Disconnected.");
 }
 async function ensureArcNetwork(){
- const chainId = await window.ethereum.request({ method: "eth_chainId" });
+ const chainId = await getWalletProvider().request({ method: "eth_chainId" });
 
  if(chainId === ARC_CHAIN_ID_HEX){
   return true;
  }
 
  try{
-  await window.ethereum.request({
+  await getWalletProvider().request({
    method:"wallet_switchEthereumChain",
    params:[{ chainId: ARC_CHAIN_ID_HEX }]
   });
@@ -738,7 +759,7 @@ async function ensureArcNetwork(){
   return true;
  }catch(e){
   if(e.code === 4902){
-   await window.ethereum.request({
+   await getWalletProvider().request({
     method:"wallet_addEthereumChain",
     params:[{
      chainId: ARC_CHAIN_ID_HEX,
@@ -1113,9 +1134,16 @@ window.addEventListener("load",()=>{
  autoReconnect();
 });
 
-if(window.ethereum){
- window.ethereum.on("accountsChanged",()=>window.location.reload());
- window.ethereum.on("chainChanged",()=>window.location.reload());
+const injectedProvider = getWalletProvider();
+
+if(injectedProvider){
+ injectedProvider.on("accountsChanged",()=>{
+  window.location.reload();
+ });
+
+ injectedProvider.on("chainChanged",()=>{
+  window.location.reload();
+ });
 }
 </script>
 </body>
