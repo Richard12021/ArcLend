@@ -714,15 +714,17 @@ if(!walletProvider){
 
 provider = new ethers.BrowserProvider(walletProvider);
 
-await walletProvider.request({
+const accounts = await walletProvider.request({
  method:"eth_requestAccounts"
 });
 
-signer = await provider.getSigner();
-account = await signer.getAddress();
+account = accounts[0];
+
+signer = await provider.getSigner(account);
 
 await ensureArcNetwork();
- provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
+provider=new ethers.BrowserProvider(walletProvider);
+signer=await provider.getSigner(account);
  pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);connected=true;
  localStorage.setItem("walletConnected","true");
  document.getElementById("connectBtn").innerHTML=account.slice(0,6)+"..."+account.slice(-4)+" ▾";
