@@ -567,8 +567,8 @@ const POOL_ABI=[
 const ERC20_ABI=["function approve(address spender,uint256 amount) returns (bool)","function allowance(address owner,address spender) view returns (uint256)","function balanceOf(address account) view returns (uint256)"];
 let provider,signer,account,pool,selectedSymbol="USDC",connected=false;
 function getWalletProvider(){
- if(window.okxwallet && window.okxwallet.ethereum){
-  return window.okxwallet.ethereum;
+ if(window.okxwallet){
+  return window.okxwallet;
  }
 
  if(window.ethereum){
