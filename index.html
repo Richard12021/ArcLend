@@ -1,70 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ArcLend — Lending on Arc</title>
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 <style>
 :root{
---bg:#07111f;
---card:rgba(255,255,255,.08);
---card2:rgba(255,255,255,.12);
-
---text:#f4f8ff;
---muted:#9fb3d9;
-
---green:#4f8cff;
---cyan:#6ee7ff;
-
---yellow:#ffcc66;
---red:#ff6b81;
-
---border:rgba(255,255,255,.14);
---shadow:0 24px 80px rgba(0,0,0,.28);
+  --bg:#07111f;--bg2:#030816;--card:rgba(255,255,255,.08);--card2:rgba(255,255,255,.12);
+  --text:#f4f8ff;--muted:#9fb3d9;--primary:#4f8cff;--primary2:#6ee7ff;
+  --success:#39d98a;--warning:#ffcc66;--danger:#ff6b81;--border:rgba(255,255,255,.14);
+  --shadow:0 24px 80px rgba(0,0,0,.3)
 }
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,Arial,sans-serif;background:radial-gradient(circle at 18% 6%,rgba(79,140,255,.22),transparent 32%),radial-gradient(circle at 80% 0%,rgba(103,232,249,.13),transparent 30%),linear-gradient(180deg,var(--bg),#030816);color:var(--text);min-height:100vh}.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 56px}
-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20;padding:12px 0 20px;backdrop-filter:blur(12px)}.logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px}.logoMark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--cyan));box-shadow:0 0 30px rgba(79,140,255,.28)}.navLinks{display:flex;gap:18px;align-items:center}.navLinks a{color:var(--muted);text-decoration:none;font-weight:700;font-size:14px}.navLinks a:hover{color:var(--text)}
-button{border:0;border-radius:14px;padding:13px 17px;font-weight:900;cursor:pointer;color:#031411;background:linear-gradient(135deg,var(--green),var(--cyan));transition:.12s;box-shadow:0 12px 30px rgba(79,140,255,.18)}button:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(79,140,255,.24)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}.ghost{color:var(--text);background:var(--card2);border:1px solid var(--border);box-shadow:none}
-.hero{display:grid;grid-template-columns:1.08fr .92fr;gap:24px;align-items:center;padding:52px 0 34px}.eyebrow{display:inline-flex;padding:8px 12px;border-radius:999px;border:1px solid rgba(79,140,255,.3);background:rgba(79,140,255,.08);color:var(--green);font-weight:900;font-size:13px;margin-bottom:18px}h1{font-size:66px;line-height:.95;letter-spacing:-.07em;margin:0 0 18px}.grad{background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{font-size:18px;line-height:1.65;color:var(--muted);max-width:620px;margin:0 0 24px}.heroActions{display:flex;gap:12px;flex-wrap:wrap}
-.heroCard,.panel,.stat,.box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}.heroCard{border-radius:30px;padding:24px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06))}.miniGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.mini{padding:16px;border-radius:20px;background:rgba(0,0,0,.18);border:1px solid var(--border)}.mini .n{font-size:26px;font-weight:950;margin-bottom:4px}.mini .t,.small,.label{color:var(--muted)}
-.sectionTitle{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:34px 0 14px}.sectionTitle h2{margin:0;font-size:28px;letter-spacing:-.04em}.sectionTitle p{margin:0;color:var(--muted);font-size:14px}.portfolioGrid{display:grid;grid-template-columns:1.2fr repeat(3,1fr);gap:14px}.label{font-size:13px;margin-bottom:8px}.value{font-size:24px;font-weight:950;word-break:break-word}.riskSafe{color:var(--green)}.riskWarn{color:var(--yellow)}.riskDanger{color:var(--red)}.riskLabel{margin-top:8px;font-size:12px;font-weight:900}.progressWrap{width:100%;height:12px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;border:1px solid var(--border);margin-top:10px}.progress{height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:999px;transition:width .25s ease}#borrowLimitBar{background:linear-gradient(90deg,var(--green),var(--yellow),var(--red))}
-table{width:100%;border-collapse:separate;border-spacing:0 10px}th{color:var(--muted);font-size:12px;text-align:left;padding:0 14px 4px}td{background:rgba(255,255,255,.07);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 14px}td:first-child{border-left:1px solid var(--border);border-radius:16px 0 0 16px}td:last-child{border-right:1px solid var(--border);border-radius:0 16px 16px 0}.assetName{font-weight:950}.pill{display:inline-flex;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:800}
-.assetbar{display:grid;grid-template-columns:1fr 1.25fr;gap:14px;margin-bottom:16px}.dashboardGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}.main{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px}.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}h3{margin:0 0 12px;font-size:16px}input,select{width:100%;border:1px solid var(--border);outline:none;background:rgba(0,0,0,.24);color:var(--text);padding:13px 14px;border-radius:13px;font-size:15px;margin-bottom:10px}option{background:#061f1b;color:#fff}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row button{flex:1}.small{font-size:13px;line-height:1.55}.addr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green);word-break:break-all}#log{min-height:250px;max-height:420px;overflow:auto;background:rgba(0,0,0,.25);border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.5;white-space:pre-wrap}.how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stepNo{width:34px;height:34px;border-radius:12px;background:rgba(79,140,255,.12);color:var(--green);display:grid;place-items:center;font-weight:950;margin-bottom:12px}
-@media(max-width:980px){.hero{grid-template-columns:1fr}h1{font-size:48px}.portfolioGrid,.dashboardGrid{grid-template-columns:repeat(2,1fr)}.main,.assetbar{grid-template-columns:1fr}.how{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){nav{flex-direction:column;align-items:stretch}.navLinks{justify-content:center;flex-wrap:wrap}.portfolioGrid,.dashboardGrid,.actions,.how{grid-template-columns:1fr}h1{font-size:40px}.heroActions button{width:100%}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:Inter,Arial,sans-serif;color:var(--text);min-height:100vh;
+  background:
+    radial-gradient(circle at 18% 6%,rgba(79,140,255,.22),transparent 32%),
+    radial-gradient(circle at 80% 0%,rgba(110,231,255,.13),transparent 30%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 18px 56px}
+nav{display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20;padding:8px 0 18px;backdrop-filter:blur(14px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:950}
+.logoMark{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 0 28px rgba(79,140,255,.35)}
+.navLinks{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.navLinks button,.navLinks a{color:var(--muted);text-decoration:none;font-weight:800;font-size:13px;background:transparent;border:1px solid transparent;box-shadow:none;padding:9px 11px;border-radius:10px}
+.navLinks button:hover,.navLinks a:hover{color:var(--text);border-color:var(--border);transform:none;box-shadow:none}
+button{border:0;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;color:#06101f;background:linear-gradient(135deg,var(--primary),var(--primary2));transition:.12s;box-shadow:0 12px 30px rgba(79,140,255,.18)}
+button:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(79,140,255,.25)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.ghost{color:var(--text);background:var(--card2);border:1px solid var(--border);box-shadow:none}
+.walletBox{position:relative}
+.walletBtn{display:flex;gap:8px;align-items:center}
+.walletMenu{display:none;position:absolute;right:0;top:48px;width:315px;background:rgba(5,13,28,.96);border:1px solid var(--border);border-radius:20px;padding:14px;box-shadow:var(--shadow);z-index:50}
+.walletMenu.open{display:block}
+.walletAddr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--primary2);font-size:13px;word-break:break-all;margin-bottom:10px}
+.balanceRow{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding:10px 0;color:var(--muted);font-size:13px}
+.menuActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.menuActions button,.menuActions a{font-size:13px;text-align:center;text-decoration:none;border-radius:12px;padding:10px;background:var(--card2);color:var(--text);border:1px solid var(--border);box-shadow:none;font-weight:900}
+.screen{display:none}.screen.active{display:block}
+.hero{display:grid;grid-template-columns:1.08fr .92fr;gap:24px;align-items:center;min-height:calc(100vh - 110px);padding:42px 0}
+.eyebrow{display:inline-flex;padding:8px 12px;border-radius:999px;border:1px solid rgba(79,140,255,.3);background:rgba(79,140,255,.08);color:var(--primary2);font-weight:950;font-size:13px;margin-bottom:18px}
+h1{font-size:66px;line-height:.95;letter-spacing:-.07em;margin:0 0 18px}
+.grad{background:linear-gradient(135deg,var(--primary),var(--primary2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:18px;line-height:1.65;color:var(--muted);max-width:620px;margin:0 0 24px}
+.heroActions{display:flex;gap:12px;flex-wrap:wrap}
+.panel,.stat,.box,.heroCard{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.heroCard{border-radius:30px;padding:24px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06))}
+.miniGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.mini{padding:16px;border-radius:20px;background:rgba(0,0,0,.18);border:1px solid var(--border)}
+.mini .n{font-size:26px;font-weight:950;margin-bottom:4px}.mini .t,.small,.label{color:var(--muted)}
+.sectionTitle{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:34px 0 14px}
+.sectionTitle h2{margin:0;font-size:32px;letter-spacing:-.04em}.sectionTitle p{margin:0;color:var(--muted);font-size:14px}
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.stepNo{width:34px;height:34px;border-radius:12px;background:rgba(79,140,255,.12);color:var(--primary2);display:grid;place-items:center;font-weight:950;margin-bottom:12px}
+.portfolioGrid{display:grid;grid-template-columns:1.2fr repeat(3,1fr);gap:14px}
+.label{font-size:13px;margin-bottom:8px}.value{font-size:24px;font-weight:950;word-break:break-word}
+.riskSafe{color:var(--success)}.riskWarn{color:var(--warning)}.riskDanger{color:var(--danger)}
+.riskLabel{margin-top:8px;font-size:12px;font-weight:900}
+.progressWrap{width:100%;height:12px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;border:1px solid var(--border);margin-top:10px}
+.progress{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--primary2));border-radius:999px;transition:width .25s ease}
+#borrowLimitBar{background:linear-gradient(90deg,var(--success),var(--warning),var(--danger))}
+table{width:100%;border-collapse:separate;border-spacing:0 10px}
+th{color:var(--muted);font-size:12px;text-align:left;padding:0 14px 4px}
+td{background:rgba(255,255,255,.07);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 14px}
+td:first-child{border-left:1px solid var(--border);border-radius:16px 0 0 16px}
+td:last-child{border-right:1px solid var(--border);border-radius:0 16px 16px 0}
+.assetName{font-weight:950}.addr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--primary2);word-break:break-all}
+.assetbar{display:grid;grid-template-columns:1fr 1.25fr;gap:14px;margin-bottom:16px}
+.dashboardGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.main{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+h3{margin:0 0 12px;font-size:16px}
+input,select{width:100%;border:1px solid var(--border);outline:none;background:rgba(0,0,0,.24);color:var(--text);padding:13px 14px;border-radius:13px;font-size:15px;margin-bottom:10px}
+option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row button{flex:1}
+.small{font-size:13px;line-height:1.55}.statusBox{margin-top:14px;min-height:20px;color:var(--muted);font-size:13px}
+@media(max-width:980px){.hero{grid-template-columns:1fr;min-height:auto}.portfolioGrid,.dashboardGrid{grid-template-columns:repeat(2,1fr)}.assetbar{grid-template-columns:1fr}.how{grid-template-columns:repeat(2,1fr)}h1{font-size:48px}}
+@media(max-width:560px){nav{flex-direction:column;align-items:stretch}.navLinks{justify-content:center}.portfolioGrid,.dashboardGrid,.actions,.how{grid-template-columns:1fr}h1{font-size:40px}.heroActions button{width:100%}.walletMenu{right:auto;left:0;width:100%}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<nav><div class="logo"><div class="logoMark"></div>ArcLend</div><div class="navLinks"><a href="#markets">Markets</a><a href="#portfolio">Portfolio</a><a href="#app">App</a></div><button id="connectBtn">Connect Wallet</button></nav>
-<section class="hero"><div><div class="eyebrow">Built on Arc Testnet</div><h1>Borrow liquidity.<br/><span class="grad">Earn on idle capital.</span></h1><p>ArcLend is a multi-asset lending market for USDC, EURC, and cirBTC. Supply assets, borrow against collateral, and track risk in real time.</p><div class="heroActions"><button onclick="document.getElementById('app').scrollIntoView({behavior:'smooth'})">Launch App</button><button class="ghost" onclick="document.getElementById('markets').scrollIntoView({behavior:'smooth'})">View Markets</button></div></div><div class="heroCard"><div class="miniGrid"><div class="mini"><div class="n" id="heroSupplied">$-</div><div class="t">Total Supplied</div></div><div class="mini"><div class="n" id="heroBorrowed">$-</div><div class="t">Total Borrowed</div></div><div class="mini"><div class="n">3</div><div class="t">Supported Assets</div></div><div class="mini"><div class="n">75%</div><div class="t">Max Collateral Factor</div></div></div></div></section>
-<section id="portfolio"><div class="sectionTitle"><div><h2>Your Portfolio</h2><p>Real-time overview of your lending position.</p></div><span class="pill" id="networkStatus">Not connected</span></div><div class="portfolioGrid"><div class="panel"><div class="label">Borrow Limit Used</div><div class="value" id="borrowLimitText">-</div><div class="progressWrap"><div class="progress" id="borrowLimitBar"></div></div><div class="riskLabel" id="borrowLimitRisk">Connect wallet to calculate risk.</div></div><div class="stat"><div class="label">Collateral Value</div><div class="value" id="portfolioCollateral">$-</div></div><div class="stat"><div class="label">Borrowed Value</div><div class="value" id="portfolioBorrowed">$-</div></div><div class="stat"><div class="label">Health Factor</div><div class="value" id="healthFactor">-</div><div class="riskLabel" id="healthStatus">-</div></div></div></section>
-<section id="markets"><div class="sectionTitle"><div><h2>Markets</h2><p>Supply APY, Borrow APR, and utilization across supported assets.</p></div></div><div class="panel"><table><thead><tr><th>Asset</th><th>Total Supplied</th><th>Total Borrowed</th><th>Supply APY</th><th>Borrow APR</th><th>Utilization</th></tr></thead><tbody id="marketTable"><tr><td colspan="6">Connect wallet to load markets.</td></tr></tbody></table></div></section>
-<section><div class="sectionTitle"><div><h2>How it works</h2><p>A simple lending flow built for Arc testnet users.</p></div></div><div class="how"><div class="panel"><div class="stepNo">1</div><h3>Get assets</h3><div class="small">Fund your wallet with testnet USDC, EURC, or cirBTC.</div></div><div class="panel"><div class="stepNo">2</div><h3>Supply collateral</h3><div class="small">Approve and supply assets to the ArcLend pool.</div></div><div class="panel"><div class="stepNo">3</div><h3>Borrow liquidity</h3><div class="small">Borrow against collateral while monitoring your risk.</div></div><div class="panel"><div class="stepNo">4</div><h3>Manage position</h3><div class="small">Repay, withdraw, and keep your health factor safe.</div></div></div></section>
-<section id="app"><div class="sectionTitle"><div><h2>ArcLend App</h2><p>Select a market and interact with the protocol.</p></div></div><section class="assetbar"><div class="panel"><div class="label">Selected Market</div><select id="assetSelect" onchange="onAssetChange()"><option value="USDC">USDC</option><option value="EURC">EURC</option><option value="cirBTC">cirBTC</option></select><div class="small">Selected asset address:</div><div class="addr" id="assetAddr"></div></div><div class="panel"><div class="label">Contract</div><div class="addr" id="contractAddr"></div><div class="small" style="margin-top:12px">All markets use ERC20 approve → supply/repay. Native USDC is used only as gas.</div></div></section><section class="dashboardGrid"><div class="stat"><div class="label">Your Supplied</div><div class="value" id="supplied">-</div></div><div class="stat"><div class="label">Your Borrowed</div><div class="value" id="borrowed">-</div></div><div class="stat"><div class="label">Available Borrow</div><div class="value" id="availableBorrow">-</div></div><div class="stat"><div class="label">Utilization</div><div class="value" id="utilization">-</div><div class="progressWrap"><div class="progress" id="utilizationBar"></div></div></div></section><section class="main"><div class="panel"><h2>Actions</h2><div class="box" style="margin-bottom:14px"><h3>Token Approval</h3><input id="approveAmount" placeholder="Approve amount, e.g. 10" /><button onclick="approveSelectedAsset()">Approve Selected Asset</button><div class="small" id="approvalHint">Approve selected token before supply or repay.</div></div><div class="actions"><div class="box"><h3>Supply</h3><input id="supplyAmount" placeholder="Amount, e.g. 1" /><button onclick="supply()">Supply</button><div class="small" id="supplyHint">Requires approval first.</div></div><div class="box"><h3>Withdraw</h3><input id="withdrawAmount" placeholder="Amount, e.g. 0.5" /><button onclick="withdraw()">Withdraw</button></div><div class="box"><h3>Borrow</h3><input id="borrowAmount" placeholder="Amount, e.g. 0.5" /><button onclick="borrow()">Borrow</button></div><div class="box"><h3>Repay</h3><input id="repayAmount" placeholder="Amount, e.g. 0.25" /><button onclick="repay()">Repay</button><div class="small" id="repayHint">Requires approval first.</div></div></div><div class="row" style="margin-top:14px"><button class="ghost" onclick="refreshData()">Refresh Data</button><button class="ghost" onclick="fillDemo()">Fill Demo Values</button></div></div><div class="panel"><h2>Activity Log</h2><div id="log">Ready.</div></div></section></section>
+<nav>
+  <div class="logo"><div class="logoMark"></div>ArcLend</div>
+  <div class="navLinks">
+    <button onclick="showScreen('home')">Home</button>
+    <button onclick="showScreen('markets')">Markets</button>
+    <button onclick="showScreen('portfolio')">Portfolio</button>
+    <button onclick="showScreen('app')">App</button>
+    <a href="https://faucet.circle.com/" target="_blank">Faucet</a>
+  </div>
+  <div class="walletBox">
+    <button id="connectBtn" class="walletBtn">Connect Wallet</button>
+    <div id="walletMenu" class="walletMenu">
+      <div class="walletAddr" id="walletFullAddr">-</div>
+      <div class="balanceRow"><span>USDC</span><b id="balUSDC">-</b></div>
+      <div class="balanceRow"><span>EURC</span><b id="balEURC">-</b></div>
+      <div class="balanceRow"><span>cirBTC</span><b id="balBTC">-</b></div>
+      <div class="menuActions">
+        <button onclick="copyWallet()">Copy</button>
+        <a id="arcscanLink" href="#" target="_blank">ArcScan</a>
+        <button onclick="disconnectWallet()">Disconnect</button>
+        <a href="https://faucet.circle.com/" target="_blank">Faucet</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section id="home" class="screen active">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Built on Arc Testnet</div>
+      <h1>Borrow liquidity.<br/><span class="grad">Earn on idle capital.</span></h1>
+      <p>ArcLend is a clean multi-asset lending market for USDC, EURC, and cirBTC. Supply assets, borrow against collateral, and manage risk in real time.</p>
+      <div class="heroActions">
+        <button onclick="showScreen('app')">Launch App</button>
+        <button class="ghost" onclick="showScreen('markets')">View Markets</button>
+      </div>
+    </div>
+    <div class="heroCard">
+      <div class="miniGrid">
+        <div class="mini"><div class="n" id="heroSupplied">$-</div><div class="t">Total Supplied</div></div>
+        <div class="mini"><div class="n" id="heroBorrowed">$-</div><div class="t">Total Borrowed</div></div>
+        <div class="mini"><div class="n">3</div><div class="t">Supported Assets</div></div>
+        <div class="mini"><div class="n">Arc</div><div class="t">Testnet Native</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sectionTitle"><div><h2>How it works</h2><p>Simple lending flow for Arc testnet users.</p></div></div>
+  <div class="how">
+    <div class="panel"><div class="stepNo">1</div><h3>Get assets</h3><div class="small">Use Circle faucet to fund your wallet.</div></div>
+    <div class="panel"><div class="stepNo">2</div><h3>Supply collateral</h3><div class="small">Supply USDC, EURC, or cirBTC.</div></div>
+    <div class="panel"><div class="stepNo">3</div><h3>Borrow liquidity</h3><div class="small">Borrow against supplied collateral.</div></div>
+    <div class="panel"><div class="stepNo">4</div><h3>Manage risk</h3><div class="small">Track health factor and repay safely.</div></div>
+  </div>
+</section>
+
+<section id="markets" class="screen">
+  <div class="sectionTitle"><div><h2>Markets</h2><p>Live lending markets from the ArcLend contract.</p></div></div>
+  <div class="panel">
+    <table>
+      <thead><tr><th>Asset</th><th>Total Supplied</th><th>Total Borrowed</th><th>Supply APY</th><th>Borrow APR</th><th>Utilization</th></tr></thead>
+      <tbody id="marketTable"><tr><td colspan="6">Connect wallet to load markets.</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="portfolio" class="screen">
+  <div class="sectionTitle"><div><h2>Your Portfolio</h2><p>Real-time overview of your lending position.</p></div></div>
+  <div class="portfolioGrid">
+    <div class="panel"><div class="label">Borrow Limit Used</div><div class="value" id="borrowLimitText">-</div><div class="progressWrap"><div class="progress" id="borrowLimitBar"></div></div><div class="riskLabel" id="borrowLimitRisk">Connect wallet to calculate risk.</div></div>
+    <div class="stat"><div class="label">Collateral Value</div><div class="value" id="portfolioCollateral">$-</div></div>
+    <div class="stat"><div class="label">Borrowed Value</div><div class="value" id="portfolioBorrowed">$-</div></div>
+    <div class="stat"><div class="label">Health Factor</div><div class="value" id="healthFactor">-</div><div class="riskLabel" id="healthStatus">-</div></div>
+  </div>
+</section>
+
+<section id="app" class="screen">
+  <div class="sectionTitle"><div><h2>ArcLend App</h2><p>Select a market and interact with the protocol.</p></div></div>
+  <section class="assetbar">
+    <div class="panel">
+      <div class="label">Selected Market</div>
+      <select id="assetSelect" onchange="onAssetChange()">
+        <option value="USDC">USDC</option>
+        <option value="EURC">EURC</option>
+        <option value="cirBTC">cirBTC</option>
+      </select>
+      <div class="small">Selected asset address:</div><div class="addr" id="assetAddr"></div>
+    </div>
+    <div class="panel">
+      <div class="label">Contract</div><div class="addr" id="contractAddr"></div>
+      <div class="small" style="margin-top:12px">Approve is handled automatically before Supply or Repay when needed.</div>
+    </div>
+  </section>
+
+  <section class="dashboardGrid">
+    <div class="stat"><div class="label">Your Supplied</div><div class="value" id="supplied">-</div></div>
+    <div class="stat"><div class="label">Your Borrowed</div><div class="value" id="borrowed">-</div></div>
+    <div class="stat"><div class="label">Available Borrow</div><div class="value" id="availableBorrow">-</div></div>
+    <div class="stat"><div class="label">Utilization</div><div class="value" id="utilization">-</div><div class="progressWrap"><div class="progress" id="utilizationBar"></div></div></div>
+  </section>
+
+  <section class="main">
+    <div class="panel">
+      <h2>Actions</h2>
+      <div class="actions">
+        <div class="box"><h3>Supply</h3><input id="supplyAmount" placeholder="Amount, e.g. 10"/><button onclick="supply()">Supply</button><div class="small">Auto-approve if allowance is not enough.</div></div>
+        <div class="box"><h3>Withdraw</h3><input id="withdrawAmount" placeholder="Amount, e.g. 5"/><button onclick="withdraw()">Withdraw</button></div>
+        <div class="box"><h3>Borrow</h3><input id="borrowAmount" placeholder="Amount, e.g. 1"/><button onclick="borrow()">Borrow</button></div>
+        <div class="box"><h3>Repay</h3><input id="repayAmount" placeholder="Amount, e.g. 1"/><button onclick="repay()">Repay</button><div class="small">Auto-approve if allowance is not enough.</div></div>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="ghost" onclick="refreshData()">Refresh Data</button><button class="ghost" onclick="fillDemo()">Fill Demo Values</button></div>
+      <div class="statusBox" id="statusBox">Ready.</div>
+    </div>
+  </section>
+</section>
 </div>
+
 <script>
 const POOL_ADDRESS="0x1c5E6F86ce0ea764b387Df8fF96959F65fFf90EA";
-const ASSETS={USDC:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,price:1},EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6,price:1.08},cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8,price:67000}};
+const ARCSCAN_BASE="https://testnet.arcscan.app/address/";
+const ASSETS={
+  USDC:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,price:1,balId:"balUSDC"},
+  EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6,price:1.08,balId:"balEURC"},
+  cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8,price:67000,balId:"balBTC"}
+};
 const ARC_CHAIN_ID_DEC=5042002,ARC_CHAIN_ID_HEX="0x4CF1DA";
-const POOL_ABI=["function supply(address asset,uint256 amount)","function withdraw(address asset,uint256 amount)","function borrow(address asset,uint256 amount)","function repay(address asset,uint256 amount,address onBehalfOf)","function getUserSupplied(address user,address asset) view returns (uint256)","function getUserBorrowed(address user,address asset) view returns (uint256)","function getHealthFactor(address user) view returns (uint256)","function getMaxBorrow(address user,address asset) view returns (uint256)","function getSupplyRate(address asset) view returns (uint256)","function getBorrowRate(address asset) view returns (uint256)","function getUtilization(address asset) view returns (uint256)","function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)"];
+const POOL_ABI=[
+ "function supply(address asset,uint256 amount)","function withdraw(address asset,uint256 amount)","function borrow(address asset,uint256 amount)","function repay(address asset,uint256 amount,address onBehalfOf)",
+ "function getUserSupplied(address user,address asset) view returns (uint256)","function getUserBorrowed(address user,address asset) view returns (uint256)","function getHealthFactor(address user) view returns (uint256)",
+ "function getMaxBorrow(address user,address asset) view returns (uint256)","function getSupplyRate(address asset) view returns (uint256)","function getBorrowRate(address asset) view returns (uint256)","function getUtilization(address asset) view returns (uint256)",
+ "function poolStates(address asset) view returns (uint256 totalSupplied,uint256 totalBorrowed,uint256 borrowIndex,uint256 supplyIndex,uint256 lastUpdateTimestamp,uint256 accruedProtocolFees)"
+];
 const ERC20_ABI=["function approve(address spender,uint256 amount) returns (bool)","function allowance(address owner,address spender) view returns (uint256)","function balanceOf(address account) view returns (uint256)"];
-let provider,signer,account,pool,selectedSymbol="USDC";document.getElementById("contractAddr").textContent=POOL_ADDRESS;updateAssetUI();
-function currentAsset(){return ASSETS[selectedSymbol]}function log(msg){const el=document.getElementById("log");const time=new Date().toLocaleTimeString();el.textContent=`[${time}] ${msg}\n`+el.textContent}function parseAssetAmount(value){const asset=currentAsset();if(!value||Number(value)<=0)throw new Error("Enter a valid amount");return ethers.parseUnits(value,asset.decimals)}function formatAmountFor(asset,value){return Number(ethers.formatUnits(value,asset.decimals)).toLocaleString(undefined,{maximumFractionDigits:asset.decimals})+" "+asset.symbol}function usd(n){return "$"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}function formatPrecision(value,digits=2){const n=Number(ethers.formatUnits(value,18));if(!Number.isFinite(n))return "-";if(n>1000000)return "∞";return n.toLocaleString(undefined,{maximumFractionDigits:digits})}function formatPercent(value,digits=2){const n=Number(ethers.formatUnits(value,18))*100;if(!Number.isFinite(n))return "-";return n.toLocaleString(undefined,{maximumFractionDigits:digits})+"%"}function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDanger");if(cls)el.classList.add(cls)}
-function updateRiskUI(healthFactor,totalBorrowedUSD,maxBorrowUSD){const hfEl=document.getElementById("healthFactor"),hfStatus=document.getElementById("healthStatus"),limitText=document.getElementById("borrowLimitText"),limitBar=document.getElementById("borrowLimitBar"),limitRisk=document.getElementById("borrowLimitRisk");if(totalBorrowedUSD<=0){hfEl.textContent="∞";hfStatus.textContent="Safe — no active debt";setRiskClass(hfEl,"riskSafe");setRiskClass(hfStatus,"riskSafe")}else{const hf=Number(ethers.formatUnits(healthFactor,18));hfEl.textContent=formatPrecision(healthFactor,3);if(hf>=1.5){hfStatus.textContent="Safe";setRiskClass(hfEl,"riskSafe");setRiskClass(hfStatus,"riskSafe")}else if(hf>=1.1){hfStatus.textContent="Warning";setRiskClass(hfEl,"riskWarn");setRiskClass(hfStatus,"riskWarn")}else{hfStatus.textContent="High risk";setRiskClass(hfEl,"riskDanger");setRiskClass(hfStatus,"riskDanger")}}const totalCapacity=totalBorrowedUSD+maxBorrowUSD;let usedPct=totalCapacity>0?(totalBorrowedUSD/totalCapacity)*100:0;usedPct=Math.min(Math.max(usedPct,0),100);limitText.textContent=usedPct.toLocaleString(undefined,{maximumFractionDigits:2})+"%";limitBar.style.width=usedPct+"%";if(usedPct<60){limitRisk.textContent="Safe borrowing range";setRiskClass(limitRisk,"riskSafe")}else if(usedPct<85){limitRisk.textContent="Moderate risk — keep an eye on health factor";setRiskClass(limitRisk,"riskWarn")}else{limitRisk.textContent="High risk — close to borrow limit";setRiskClass(limitRisk,"riskDanger")}}
-function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address;document.getElementById("approvalHint").textContent=`Approve ${asset.symbol} before supply or repay.`;document.getElementById("supplyHint").textContent=`Supply uses ERC20 transferFrom. Approve ${asset.symbol} first.`;document.getElementById("repayHint").textContent=`Repay uses ERC20 transferFrom. Approve ${asset.symbol} first.`}
-async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();log("Selected asset: "+selectedSymbol);await refreshData()}
-async function connectWallet(){if(!window.ethereum){alert("Please install MetaMask or OKX Wallet.");return}provider=new ethers.BrowserProvider(window.ethereum);await provider.send("eth_requestAccounts",[]);signer=await provider.getSigner();account=await signer.getAddress();await ensureArcNetwork();provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);document.getElementById("connectBtn").textContent=account.slice(0,6)+"..."+account.slice(-4);document.getElementById("networkStatus").textContent="Arc Testnet connected";log("Wallet connected: "+account);await refreshData();await loadMarkets()}
-async function ensureArcNetwork(){const network=await provider.getNetwork();if(Number(network.chainId)===ARC_CHAIN_ID_DEC)return;try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX}]})}catch(e){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:["https://rpc.testnet.arc.network"],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}}
-async function loadMarkets(){if(!pool)return;let rows="",totalSuppliedUSD=0,totalBorrowedUSD=0;for(const symbol of Object.keys(ASSETS)){const asset=ASSETS[symbol];const [state,supplyRate,borrowRate,utilization]=await Promise.all([pool.poolStates(asset.address),pool.getSupplyRate(asset.address),pool.getBorrowRate(asset.address),pool.getUtilization(asset.address)]);const supplied=Number(ethers.formatUnits(state.totalSupplied,asset.decimals));const borrowed=Number(ethers.formatUnits(state.totalBorrowed,asset.decimals));totalSuppliedUSD+=supplied*asset.price;totalBorrowedUSD+=borrowed*asset.price;rows+=`<tr><td><div class="assetName">${asset.symbol}</div><div class="small">${asset.address.slice(0,6)}...${asset.address.slice(-4)}</div></td><td>${supplied.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${borrowed.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${formatPercent(supplyRate)}</td><td>${formatPercent(borrowRate)}</td><td>${formatPercent(utilization)}</td></tr>`}document.getElementById("marketTable").innerHTML=rows;document.getElementById("heroSupplied").textContent=usd(totalSuppliedUSD);document.getElementById("heroBorrowed").textContent=usd(totalBorrowedUSD)}
-async function refreshData(){if(!pool||!account)return;const asset=currentAsset();const [supplied,borrowed,state,healthFactor,maxBorrow,supplyRate,borrowRate,utilization]=await Promise.all([pool.getUserSupplied(account,asset.address),pool.getUserBorrowed(account,asset.address),pool.poolStates(asset.address),pool.getHealthFactor(account),pool.getMaxBorrow(account,asset.address),pool.getSupplyRate(asset.address),pool.getBorrowRate(asset.address),pool.getUtilization(asset.address)]);document.getElementById("supplied").textContent=formatAmountFor(asset,supplied);document.getElementById("borrowed").textContent=formatAmountFor(asset,borrowed);document.getElementById("availableBorrow").textContent=formatAmountFor(asset,maxBorrow);document.getElementById("utilization").textContent=formatPercent(utilization);document.getElementById("utilizationBar").style.width=Math.min(Number(ethers.formatUnits(utilization,18))*100,100)+"%";let collateralUSD=0,borrowedUSD=0,maxBorrowUSD=Number(ethers.formatUnits(maxBorrow,asset.decimals))*asset.price;for(const symbol of Object.keys(ASSETS)){const a=ASSETS[symbol];const [s,b]=await Promise.all([pool.getUserSupplied(account,a.address),pool.getUserBorrowed(account,a.address)]);collateralUSD+=Number(ethers.formatUnits(s,a.decimals))*a.price;borrowedUSD+=Number(ethers.formatUnits(b,a.decimals))*a.price}document.getElementById("portfolioCollateral").textContent=usd(collateralUSD);document.getElementById("portfolioBorrowed").textContent=usd(borrowedUSD);updateRiskUI(healthFactor,borrowedUSD,maxBorrowUSD);await loadMarkets();log(`${asset.symbol} data refreshed.`)}
-async function approveSelectedAsset(){try{const asset=currentAsset();const amount=parseAssetAmount(document.getElementById("approveAmount").value);const token=new ethers.Contract(asset.address,ERC20_ABI,signer);log(`Approving ${formatAmountFor(asset,amount)} for ArcLend...`);const tx=await token.approve(POOL_ADDRESS,amount);log("Approve tx sent: "+tx.hash);await tx.wait();log("Approve confirmed.")}catch(e){log("Approve failed: "+(e.shortMessage||e.message))}}
-async function supply(){try{const asset=currentAsset(),amount=parseAssetAmount(document.getElementById("supplyAmount").value);log(`Supplying ${formatAmountFor(asset,amount)}...`);const tx=await pool.supply(asset.address,amount);log("Supply tx sent: "+tx.hash);await tx.wait();log("Supply confirmed.");await refreshData()}catch(e){log("Supply failed: "+(e.shortMessage||e.message))}}
-async function withdraw(){try{const asset=currentAsset(),amount=parseAssetAmount(document.getElementById("withdrawAmount").value);log(`Withdrawing ${formatAmountFor(asset,amount)}...`);const tx=await pool.withdraw(asset.address,amount);log("Withdraw tx sent: "+tx.hash);await tx.wait();log("Withdraw confirmed.");await refreshData()}catch(e){log("Withdraw failed: "+(e.shortMessage||e.message))}}
-async function borrow(){try{const asset=currentAsset(),amount=parseAssetAmount(document.getElementById("borrowAmount").value);log(`Borrowing ${formatAmountFor(asset,amount)}...`);const tx=await pool.borrow(asset.address,amount);log("Borrow tx sent: "+tx.hash);await tx.wait();log("Borrow confirmed.");await refreshData()}catch(e){log("Borrow failed: "+(e.shortMessage||e.message))}}
-async function repay(){try{const asset=currentAsset(),amount=parseAssetAmount(document.getElementById("repayAmount").value);log(`Repaying ${formatAmountFor(asset,amount)}...`);const tx=await pool.repay(asset.address,amount,account);log("Repay tx sent: "+tx.hash);await tx.wait();log("Repay confirmed.");await refreshData()}catch(e){log("Repay failed: "+(e.shortMessage||e.message))}}
-function fillDemo(){const asset=currentAsset();if(asset.symbol==="cirBTC"){approveAmount.value="0.01";supplyAmount.value="0.001";withdrawAmount.value="0.0005";borrowAmount.value="0.0005";repayAmount.value="0.00025"}else{approveAmount.value="10";supplyAmount.value="1";withdrawAmount.value="0.5";borrowAmount.value="0.5";repayAmount.value="0.25"}log("Demo values filled for "+asset.symbol+".")}
-document.getElementById("connectBtn").addEventListener("click",connectWallet);if(window.ethereum){window.ethereum.on("accountsChanged",()=>window.location.reload());window.ethereum.on("chainChanged",()=>window.location.reload())}
+let provider,signer,account,pool,selectedSymbol="USDC",connected=false;
+
+document.getElementById("contractAddr").textContent=POOL_ADDRESS;
+updateAssetUI();
+
+function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");if(connected){refreshData();loadMarkets();}}
+function currentAsset(){return ASSETS[selectedSymbol]}
+function setStatus(msg){document.getElementById("statusBox").textContent=msg}
+function parseAssetAmount(value){const asset=currentAsset();if(!value||Number(value)<=0)throw new Error("Enter a valid amount");return ethers.parseUnits(value,asset.decimals)}
+function formatAmountFor(asset,value){return Number(ethers.formatUnits(value,asset.decimals)).toLocaleString(undefined,{maximumFractionDigits:asset.decimals})+" "+asset.symbol}
+function usd(n){return "$"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
+function formatPrecision(value,digits=2){const n=Number(ethers.formatUnits(value,18));if(!Number.isFinite(n))return "-";if(n>1000000)return "∞";return n.toLocaleString(undefined,{maximumFractionDigits:digits})}
+function formatPercent(value,digits=2){const n=Number(ethers.formatUnits(value,18))*100;if(!Number.isFinite(n))return "-";return n.toLocaleString(undefined,{maximumFractionDigits:digits})+"%"}
+function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDanger");if(cls)el.classList.add(cls)}
+function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address}
+async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();if(connected)await refreshData()}
+async function connectWallet(){
+ if(!window.ethereum){alert("Please install MetaMask or OKX Wallet.");return}
+ provider=new ethers.BrowserProvider(window.ethereum);await provider.send("eth_requestAccounts",[]);
+ signer=await provider.getSigner();account=await signer.getAddress();await ensureArcNetwork();
+ provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
+ pool=new ethers.Contract(POOL_ADDRESS,POOL_ABI,signer);connected=true;
+ document.getElementById("connectBtn").innerHTML=account.slice(0,6)+"..."+account.slice(-4)+" ▾";
+ document.getElementById("walletFullAddr").textContent=account;
+ document.getElementById("arcscanLink").href=ARCSCAN_BASE+account;
+ document.getElementById("connectBtn").onclick=toggleWalletMenu;
+ await refreshData();await loadMarkets();await loadBalances();setStatus("Wallet connected.");
+}
+function toggleWalletMenu(){document.getElementById("walletMenu").classList.toggle("open")}
+async function copyWallet(){await navigator.clipboard.writeText(account);setStatus("Wallet copied.")}
+function disconnectWallet(){connected=false;account=null;pool=null;document.getElementById("walletMenu").classList.remove("open");document.getElementById("connectBtn").textContent="Connect Wallet";document.getElementById("connectBtn").onclick=connectWallet;setStatus("Disconnected.")}
+async function ensureArcNetwork(){
+ const network=await provider.getNetwork();if(Number(network.chainId)===ARC_CHAIN_ID_DEC)return;
+ try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX}]})}
+ catch(e){await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:ARC_CHAIN_ID_HEX,chainName:"Arc Testnet",nativeCurrency:{name:"USDC",symbol:"USDC",decimals:18},rpcUrls:["https://rpc.testnet.arc.network"],blockExplorerUrls:["https://testnet.arcscan.app"]}]})}
+}
+async function loadBalances(){
+ if(!connected)return;
+ for(const symbol of Object.keys(ASSETS)){
+  const asset=ASSETS[symbol];const token=new ethers.Contract(asset.address,ERC20_ABI,signer);
+  try{const bal=await token.balanceOf(account);document.getElementById(asset.balId).textContent=formatAmountFor(asset,bal)}
+  catch(e){document.getElementById(asset.balId).textContent="-"}
+ }
+}
+function updateRiskUI(healthFactor,totalBorrowedUSD,maxBorrowUSD){
+ const hfEl=document.getElementById("healthFactor"),hfStatus=document.getElementById("healthStatus"),limitText=document.getElementById("borrowLimitText"),limitBar=document.getElementById("borrowLimitBar"),limitRisk=document.getElementById("borrowLimitRisk");
+ if(totalBorrowedUSD<=0){hfEl.textContent="∞";hfStatus.textContent="Safe — no active debt";setRiskClass(hfEl,"riskSafe");setRiskClass(hfStatus,"riskSafe")}
+ else{const hf=Number(ethers.formatUnits(healthFactor,18));hfEl.textContent=formatPrecision(healthFactor,3);if(hf>=1.5){hfStatus.textContent="Safe";setRiskClass(hfEl,"riskSafe");setRiskClass(hfStatus,"riskSafe")}else if(hf>=1.1){hfStatus.textContent="Warning";setRiskClass(hfEl,"riskWarn");setRiskClass(hfStatus,"riskWarn")}else{hfStatus.textContent="High risk";setRiskClass(hfEl,"riskDanger");setRiskClass(hfStatus,"riskDanger")}}
+ const totalCapacity=totalBorrowedUSD+maxBorrowUSD;let usedPct=totalCapacity>0?(totalBorrowedUSD/totalCapacity)*100:0;usedPct=Math.min(Math.max(usedPct,0),100);
+ limitText.textContent=usedPct.toLocaleString(undefined,{maximumFractionDigits:2})+"%";limitBar.style.width=usedPct+"%";
+ if(usedPct<60){limitRisk.textContent="Safe borrowing range";setRiskClass(limitRisk,"riskSafe")}else if(usedPct<85){limitRisk.textContent="Moderate risk";setRiskClass(limitRisk,"riskWarn")}else{limitRisk.textContent="High risk — close to borrow limit";setRiskClass(limitRisk,"riskDanger")}
+}
+async function loadMarkets(){
+ if(!pool)return;let rows="",totalSuppliedUSD=0,totalBorrowedUSD=0;
+ for(const symbol of Object.keys(ASSETS)){
+  const asset=ASSETS[symbol];const [state,supplyRate,borrowRate,utilization]=await Promise.all([pool.poolStates(asset.address),pool.getSupplyRate(asset.address),pool.getBorrowRate(asset.address),pool.getUtilization(asset.address)]);
+  const supplied=Number(ethers.formatUnits(state.totalSupplied,asset.decimals)),borrowed=Number(ethers.formatUnits(state.totalBorrowed,asset.decimals));
+  totalSuppliedUSD+=supplied*asset.price;totalBorrowedUSD+=borrowed*asset.price;
+  rows+=`<tr><td><div class="assetName">${asset.symbol}</div><div class="small">${asset.address.slice(0,6)}...${asset.address.slice(-4)}</div></td><td>${supplied.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${borrowed.toLocaleString(undefined,{maximumFractionDigits:6})}</td><td>${formatPercent(supplyRate)}</td><td>${formatPercent(borrowRate)}</td><td>${formatPercent(utilization)}</td></tr>`;
+ }
+ document.getElementById("marketTable").innerHTML=rows;document.getElementById("heroSupplied").textContent=usd(totalSuppliedUSD);document.getElementById("heroBorrowed").textContent=usd(totalBorrowedUSD);
+}
+async function refreshData(){
+ if(!pool||!account)return;const asset=currentAsset();
+ const [supplied,borrowed,state,healthFactor,maxBorrow,supplyRate,borrowRate,utilization]=await Promise.all([pool.getUserSupplied(account,asset.address),pool.getUserBorrowed(account,asset.address),pool.poolStates(asset.address),pool.getHealthFactor(account),pool.getMaxBorrow(account,asset.address),pool.getSupplyRate(asset.address),pool.getBorrowRate(asset.address),pool.getUtilization(asset.address)]);
+ document.getElementById("supplied").textContent=formatAmountFor(asset,supplied);document.getElementById("borrowed").textContent=formatAmountFor(asset,borrowed);document.getElementById("availableBorrow").textContent=formatAmountFor(asset,maxBorrow);document.getElementById("utilization").textContent=formatPercent(utilization);document.getElementById("utilizationBar").style.width=Math.min(Number(ethers.formatUnits(utilization,18))*100,100)+"%";
+ let collateralUSD=0,borrowedUSD=0,maxBorrowUSD=Number(ethers.formatUnits(maxBorrow,asset.decimals))*asset.price;
+ for(const symbol of Object.keys(ASSETS)){const a=ASSETS[symbol];const [s,b]=await Promise.all([pool.getUserSupplied(account,a.address),pool.getUserBorrowed(account,a.address)]);collateralUSD+=Number(ethers.formatUnits(s,a.decimals))*a.price;borrowedUSD+=Number(ethers.formatUnits(b,a.decimals))*a.price}
+ document.getElementById("portfolioCollateral").textContent=usd(collateralUSD);document.getElementById("portfolioBorrowed").textContent=usd(borrowedUSD);updateRiskUI(healthFactor,borrowedUSD,maxBorrowUSD);await loadBalances();
+}
+async function ensureAllowance(asset,amount){
+ const token=new ethers.Contract(asset.address,ERC20_ABI,signer);const allowance=await token.allowance(account,POOL_ADDRESS);
+ if(allowance<amount){setStatus(`Approving ${asset.symbol}...`);const tx=await token.approve(POOL_ADDRESS,amount);await tx.wait();setStatus(`${asset.symbol} approved.`)}
+}
+async function supply(){try{const asset=currentAsset(),amount=parseAssetAmount(supplyAmount.value);await ensureAllowance(asset,amount);setStatus(`Supplying ${formatAmountFor(asset,amount)}...`);const tx=await pool.supply(asset.address,amount);await tx.wait();setStatus("Supply confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Supply failed: "+(e.shortMessage||e.message))}}
+async function withdraw(){try{const asset=currentAsset(),amount=parseAssetAmount(withdrawAmount.value);setStatus(`Withdrawing ${formatAmountFor(asset,amount)}...`);const tx=await pool.withdraw(asset.address,amount);await tx.wait();setStatus("Withdraw confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Withdraw failed: "+(e.shortMessage||e.message))}}
+async function borrow(){try{const asset=currentAsset(),amount=parseAssetAmount(borrowAmount.value);setStatus(`Borrowing ${formatAmountFor(asset,amount)}...`);const tx=await pool.borrow(asset.address,amount);await tx.wait();setStatus("Borrow confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Borrow failed: "+(e.shortMessage||e.message))}}
+async function repay(){try{const asset=currentAsset(),amount=parseAssetAmount(repayAmount.value);await ensureAllowance(asset,amount);setStatus(`Repaying ${formatAmountFor(asset,amount)}...`);const tx=await pool.repay(asset.address,amount,account);await tx.wait();setStatus("Repay confirmed.");await refreshData();await loadMarkets()}catch(e){setStatus("Repay failed: "+(e.shortMessage||e.message))}}
+function fillDemo(){const asset=currentAsset();if(asset.symbol==="cirBTC"){supplyAmount.value="0.001";withdrawAmount.value="0.0005";borrowAmount.value="0.0005";repayAmount.value="0.00025"}else{supplyAmount.value="1";withdrawAmount.value="0.5";borrowAmount.value="0.5";repayAmount.value="0.25"}setStatus("Demo values filled.")}
+document.getElementById("connectBtn").onclick=connectWallet;
+if(window.ethereum){window.ethereum.on("accountsChanged",()=>window.location.reload());window.ethereum.on("chainChanged",()=>window.location.reload())}
 </script>
 </body>
 </html>
