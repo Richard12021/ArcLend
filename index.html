@@ -695,7 +695,10 @@ function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDan
 function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address}
 async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();if(connected)await refreshData()}
 async function connectWallet(){
- if(!window.ethereum){alert("Please install MetaMask or OKX Wallet.");return}
+  if(!window.ethereum){
+ alert("Please install or enable an EVM wallet extension such as OKX Wallet or MetaMask.");
+ return;
+}
  provider=new ethers.BrowserProvider(window.ethereum);await provider.send("eth_requestAccounts",[]);
  signer=await provider.getSigner();account=await signer.getAddress();await ensureArcNetwork();
  provider=new ethers.BrowserProvider(window.ethereum);signer=await provider.getSigner();account=await signer.getAddress();
