@@ -39,6 +39,7 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .walletAddr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--primary2);font-size:13px;word-break:break-all;margin-bottom:10px}
 .balanceRow{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding:10px 0;color:var(--muted);font-size:13px}
 .menuActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.menuActions button:last-child{grid-column:1 / -1}
 .menuActions button,.menuActions a{font-size:13px;text-align:center;text-decoration:none;border-radius:12px;padding:10px;background:var(--card2);color:var(--text);border:1px solid var(--border);box-shadow:none;font-weight:900}
 .screen{display:none}.screen.active{display:block}
 .hero{display:grid;grid-template-columns:1.08fr .92fr;gap:24px;align-items:center;min-height:calc(100vh - 110px);padding:42px 0}
@@ -99,11 +100,10 @@ option{background:#07111f;color:#fff}.row{display:flex;gap:10px;align-items:cent
       <div class="balanceRow"><span>EURC</span><b id="balEURC">-</b></div>
       <div class="balanceRow"><span>cirBTC</span><b id="balBTC">-</b></div>
       <div class="menuActions">
-        <button onclick="copyWallet()">Copy</button>
-        <a id="arcscanLink" href="#" target="_blank">ArcScan</a>
-        <button onclick="disconnectWallet()">Disconnect</button>
-        <a href="https://faucet.circle.com/" target="_blank">Faucet</a>
-      </div>
+  <button onclick="copyWallet()">Copy</button>
+  <a id="arcscanLink" href="#" target="_blank">ArcScan</a>
+  <button onclick="disconnectWallet()">Disconnect</button>
+</div>
     </div>
   </div>
 </nav>
@@ -206,7 +206,7 @@ const ASSETS={
   EURC:{symbol:"EURC",address:"0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a",decimals:6,price:1.08,balId:"balEURC"},
   cirBTC:{symbol:"cirBTC",address:"0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF",decimals:8,price:67000,balId:"balBTC"}
 };
-const ARC_CHAIN_ID_DEC=5042002,ARC_CHAIN_ID_HEX="0x4CF1DA";
+const ARC_CHAIN_ID_DEC=5042002,ARC_CHAIN_ID_HEX="0x4cef52";
 const POOL_ABI=[
  "function supply(address asset,uint256 amount)","function withdraw(address asset,uint256 amount)","function borrow(address asset,uint256 amount)","function repay(address asset,uint256 amount,address onBehalfOf)",
  "function getUserSupplied(address user,address asset) view returns (uint256)","function getUserBorrowed(address user,address asset) view returns (uint256)","function getHealthFactor(address user) view returns (uint256)",
