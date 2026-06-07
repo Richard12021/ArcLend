@@ -721,6 +721,19 @@ function formatAmountFor(asset,value){
 function usd(n){return "$"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
 function formatPrecision(value,digits=2){const n=Number(ethers.formatUnits(value,18));if(!Number.isFinite(n))return "-";if(n>1000000)return "∞";return n.toLocaleString(undefined,{maximumFractionDigits:digits})}
 function formatPercent(value,digits=2){const n=Number(ethers.formatUnits(value,18))*100;if(!Number.isFinite(n))return "-";return n.toLocaleString(undefined,{maximumFractionDigits:digits})+"%"}
+function formatMarketAmount(asset,value){
+ return value.toLocaleString(undefined,{
+  minimumFractionDigits:0,
+  maximumFractionDigits:
+   asset.symbol==="cirBTC" ? 8 : 2
+ });
+}
+function formatUSDPrice(value){
+ return "$" + Number(value).toLocaleString("en-US",{
+  minimumFractionDigits:0,
+  maximumFractionDigits:2
+ });
+}
 function setRiskClass(el,cls){el.classList.remove("riskSafe","riskWarn","riskDanger");if(cls)el.classList.add(cls)}
 function updateAssetUI(){const asset=currentAsset();document.getElementById("assetAddr").textContent=asset.address}
 async function onAssetChange(){selectedSymbol=document.getElementById("assetSelect").value;updateAssetUI();if(connected)await refreshData()}
@@ -891,9 +904,9 @@ async function openMarketDetail(symbol){
   formatPercent(config.liquidationThreshold);
 
  document.getElementById("modalPrice").textContent =
-  "$" + Number(
-   ethers.formatUnits(config.price,18)
-  ).toLocaleString(undefined,{maximumFractionDigits:4});
+ formatUSDPrice(
+  ethers.formatUnits(config.price,18)
+ );
 
  document.getElementById("marketModal").style.display = "block";
 }
@@ -940,8 +953,8 @@ rows+=`
       </div>
     </div>
   </td>
-  <td>${supplied.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
-  <td>${borrowed.toLocaleString(undefined,{maximumFractionDigits:2})}</td>
+  <td>${formatMarketAmount(asset,supplied)}</td>
+<td>${formatMarketAmount(asset,borrowed)}</td>
   <td><span class="rateSupply">${formatPercent(supplyRate)}</span></td>
   <td><span class="rateBorrow">${formatPercent(borrowRate)}</span></td>
   <td>${formatPercent(utilization)}</td>
